@@ -2,7 +2,7 @@
 
 import torch
 
-from residue_constants import (
+from cg2all.lib.residue_constants import (
     ATOM_INDEX_N,
     ATOM_INDEX_CA,
     ATOM_INDEX_C,
@@ -10,7 +10,7 @@ from residue_constants import (
     BOND_ANGLE0,
     TORSION_ANGLE0,
 )
-from torch_basics import v_size, v_norm_safe, inner_product, torsion_angle, pi
+from cg2all.lib.torch_basics import v_size, v_norm_safe, inner_product, torsion_angle, pi
 
 
 def rmsd_CA(R, R_ref):

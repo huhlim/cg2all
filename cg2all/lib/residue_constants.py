@@ -5,8 +5,8 @@ import numpy as np
 import torch
 from collections import namedtuple
 
-from libconfig import DATA_HOME
-from residue_constants_base import *
+from cg2all.lib.libconfig import DATA_HOME
+from cg2all.lib.residue_constants_base import *
 
 
 residue_constants_pkl_fn = DATA_HOME / "residue_constants.pkl"

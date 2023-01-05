@@ -15,13 +15,13 @@ import dgl
 
 try:
     from torch._C import _nvtx
-    from se3_transformer.model import Fiber, SE3Transformer
-    from se3_transformer.model.layers import LinearSE3, NormSE3
+    from cg2all.lib.se3_transformer.model import Fiber, SE3Transformer
+    from cg2all.lib.se3_transformer.model.layers import LinearSE3, NormSE3
 except ImportError:
-    from se3_transformer.model_no_cuda import Fiber, SE3Transformer
-    from se3_transformer.model_no_cuda.layers import LinearSE3, NormSE3
+    from cg2all.lib.se3_transformer.model_no_cuda import Fiber, SE3Transformer
+    from cg2all.lib.se3_transformer.model_no_cuda.layers import LinearSE3, NormSE3
 
-from residue_constants import (
+from cg2all.lib.residue_constants import (
     MAX_SS,
     MAX_RESIDUE_TYPE,
     MAX_ATOM,
@@ -35,11 +35,11 @@ from residue_constants import (
     TORSION_ENERGY_TENSOR,
     TORSION_ENERGY_DEP,
 )
-from libloss import loss_f, find_atomic_clash
-from torch_basics import v_size, v_norm_safe, inner_product, rotate_matrix, rotate_vector
-from libmetric import rmsd_CA, rmsd_rigid, rmsd_all, rmse_bonded
-from libcg import get_residue_center_of_mass, get_backbone_angles
-from libconfig import DTYPE
+from cg2all.lib.libloss import loss_f, find_atomic_clash
+from cg2all.lib.torch_basics import v_size, v_norm_safe, inner_product, rotate_matrix, rotate_vector
+from cg2all.lib.libmetric import rmsd_CA, rmsd_rigid, rmsd_all, rmse_bonded
+from cg2all.lib.libcg import get_residue_center_of_mass, get_backbone_angles
+from cg2all.lib.libconfig import DTYPE
 
 
 CONFIG = ConfigDict()

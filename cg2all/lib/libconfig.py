@@ -8,6 +8,7 @@ import torch
 BASE = pathlib.Path(__file__).parents[1].resolve()
 LIB_HOME = BASE / "lib"
 DATA_HOME = BASE / "data"
+MODEL_HOME = BASE / "model"
 
 DTYPE = torch.get_default_dtype()
 EPS = 1e-6

@@ -1,5 +1,5 @@
 import numpy as np
-from libconfig import DATA_HOME
+from cg2all.lib.libconfig import DATA_HOME
 
 AMINO_ACID_s = (
     "ALA",

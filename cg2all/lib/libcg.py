@@ -5,12 +5,17 @@ import numpy as np
 import torch
 import dgl
 
-from libconfig import DTYPE, EPS
-from libpdb import PDB
-from sklearn.decomposition import PCA
-import numpy_basics
-from torch_basics import v_size, inner_product, torsion_angle, one_hot_encoding, acos_safe
-from residue_constants import (
+from cg2all.lib.libconfig import DTYPE, EPS
+from cg2all.lib.libpdb import PDB
+import cg2all.lib.numpy_basics
+from cg2all.lib.torch_basics import (
+    v_size,
+    inner_product,
+    torsion_angle,
+    one_hot_encoding,
+    acos_safe,
+)
+from cg2all.lib.residue_constants import (
     MAX_RESIDUE_TYPE,
     AMINO_ACID_s,
     AMINO_ACID_ALT_s,
@@ -96,7 +101,10 @@ class ResidueBasedModel(PDB):
         self.bead_index = self.residue_index[:, None]  # deprecated
         #
         mass_weighted_R = self.R * self.atomic_mass[None, ..., None]
-        R_cg = mass_weighted_R.sum(axis=-2) / self.atomic_mass.sum(axis=-1)[None, ..., None]
+        R_cg = (
+            mass_weighted_R.sum(axis=-2)
+            / self.atomic_mass.sum(axis=-1)[None, ..., None]
+        )
         #
         self.R_cg = R_cg[..., None, :]
         self.atom_mask_cg = self.atom_mask_pdb[:, (ATOM_INDEX_CA,)]

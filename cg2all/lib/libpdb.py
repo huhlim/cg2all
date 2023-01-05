@@ -6,8 +6,9 @@ import numpy as np
 import mdtraj
 from string import ascii_uppercase as CHAIN_IDs
 from string import ascii_uppercase as INSCODEs
-from numpy_basics import *
-from residue_constants import *
+
+from cg2all.lib.numpy_basics import *
+from cg2all.lib.residue_constants import *
 
 np.set_printoptions(suppress=True)
 

@@ -16,13 +16,12 @@ warnings.filterwarnings("ignore")
 import torch
 from torch.utils.data import Dataset
 
-import tqdm
 import dgl
 
-import libcg
-from libconfig import BASE, DTYPE
-from torch_basics import v_norm, v_size
-from residue_constants import (
+from cg2all.lib.libconfig import BASE, DTYPE
+import cg2all.lib.libcg
+from cg2all.lib.torch_basics import v_norm, v_size
+from cg2all.lib.residue_constants import (
     AMINO_ACID_s,
     AMINO_ACID_REV_s,
     ATOM_INDEX_CA,
@@ -448,8 +447,8 @@ def to_pt():
     train_loader = dgl.dataloading.GraphDataLoader(
         train_set, batch_size=8, shuffle=False, num_workers=16
     )
-    for _ in tqdm.tqdm(train_loader, desc=use_pt):
-        pass
+    # for _ in tqdm.tqdm(train_loader, desc=use_pt):
+    #     pass
 
 
 def test():
