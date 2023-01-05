@@ -5,7 +5,7 @@ import copy
 import functools
 import logging
 import numpy as np
-from typing import Optional
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -504,7 +504,7 @@ def build_structure(
     ss: torch.Tensor,
     bb: torch.Tensor,
     sc: Optional[torch.Tensor] = None,
-) -> tuple[torch.Tensor, torch.Tensor]:
+) -> Tuple[torch.Tensor, torch.Tensor]:
 
     dtype = bb.dtype
     device = bb.device

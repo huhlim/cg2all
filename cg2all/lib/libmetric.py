@@ -66,7 +66,6 @@ def rmse_bonded(R, is_continuous):
     return rmse_bond_length, rmse_bond_angle, rmse_omg_angle
 
 
-# TODO
 def rmsd_torsion_angle(sc0, sc_ref, mask):
     sc = torch.acos(torch.clamp(sc0[..., 0], -1.0, 1.0))
     sc = sc * torch.sign(sc0[..., 1])
@@ -78,6 +77,3 @@ def rmsd_torsion_angle(sc0, sc_ref, mask):
     return d_bb, d_sc
 
 
-# TODO
-def molprobity_like(batch, R, torsion_s):
-    pass
