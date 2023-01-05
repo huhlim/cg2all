@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from cg2all.lib.libconfig import EPS
+from libconfig import EPS
 
 pi = torch.tensor(np.pi)
 

@@ -5,17 +5,17 @@ import numpy as np
 import torch
 import dgl
 
-from cg2all.lib.libconfig import DTYPE, EPS
-from cg2all.lib.libpdb import PDB
-import cg2all.lib.numpy_basics
-from cg2all.lib.torch_basics import (
+from libconfig import DTYPE, EPS
+from libpdb import PDB
+import numpy_basics
+from torch_basics import (
     v_size,
     inner_product,
     torsion_angle,
     one_hot_encoding,
     acos_safe,
 )
-from cg2all.lib.residue_constants import (
+from residue_constants import (
     MAX_RESIDUE_TYPE,
     AMINO_ACID_s,
     AMINO_ACID_ALT_s,

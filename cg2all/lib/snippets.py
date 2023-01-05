@@ -3,6 +3,7 @@
 import os
 import sys
 import mdtraj
+import pathlib
 import numpy as np
 import functools
 
@@ -10,17 +11,21 @@ import dgl
 import torch
 
 import cg2all
-from cg2all.lib.libconfig import MODEL_HOME
-from cg2all.lib.libdata import (
+
+BASE = pathlib.Path(__file__).parents[1].resolve()
+LIB_HOME = str(BASE / "lib")
+sys.path.insert(0, LIB_HOME)
+from libconfig import MODEL_HOME
+from libdata import (
     PredictionData,
     create_trajectory_from_batch,
     create_topology_from_data,
 )
-from cg2all.lib.residue_constants import read_martini_topology
-from cg2all.lib.libcg import ResidueBasedModel, CalphaBasedModel, Martini
-from cg2all.lib.libpdb import write_SSBOND
-from cg2all.lib.libter import patch_termini
-import cg2all.lib.libmodel
+from residue_constants import read_martini_topology
+from libcg import ResidueBasedModel, CalphaBasedModel, Martini
+from libpdb import write_SSBOND
+from libter import patch_termini
+import libmodel
 
 import warnings
 
@@ -54,8 +59,8 @@ def convert_cg2all(
         cg_model = ResidueBasedModel
     elif config["cg_model"] == "Martini":
         cg_model = Martini
-    config = cg2all.lib.libmodel.set_model_config(config, cg_model)
-    model = cg2all.lib.libmodel.Model(config, cg_model, compute_loss=False)
+    config = libmodel.set_model_config(config, cg_model)
+    model = libmodel.Model(config, cg_model, compute_loss=False)
 
     # update state_dict
     state_dict = ckpt["state_dict"]

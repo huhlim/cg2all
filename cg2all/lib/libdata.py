@@ -18,10 +18,10 @@ from torch.utils.data import Dataset
 
 import dgl
 
-from cg2all.lib.libconfig import BASE, DTYPE
-import cg2all.lib.libcg
-from cg2all.lib.torch_basics import v_norm, v_size
-from cg2all.lib.residue_constants import (
+from libconfig import BASE, DTYPE
+import libcg
+from torch_basics import v_norm, v_size
+from residue_constants import (
     AMINO_ACID_s,
     AMINO_ACID_REV_s,
     ATOM_INDEX_CA,

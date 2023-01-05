@@ -5,8 +5,8 @@ import torch
 import dgl
 from typing import Optional, List
 
-from cg2all.lib.libconfig import DTYPE, EPS
-from cg2all.lib.residue_constants import (
+from libconfig import DTYPE, EPS
+from residue_constants import (
     PROLINE_INDEX,
     ATOM_INDEX_N,
     ATOM_INDEX_CA,
@@ -20,8 +20,8 @@ from cg2all.lib.residue_constants import (
     BOND_ANGLE0,
 )
 
-from cg2all.lib.libcg import get_residue_center_of_mass
-from cg2all.lib.torch_basics import (
+from libcg import get_residue_center_of_mass
+from torch_basics import (
     v_size,
     v_norm,
     v_norm_safe,

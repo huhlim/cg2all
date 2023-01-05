@@ -3,8 +3,8 @@
 import mdtraj
 import numpy as np
 
-from cg2all.lib.numpy_basics import torsion_angle, internal_to_cartesian
-from cg2all.lib.residue_constants import TER_PATCHes
+from numpy_basics import torsion_angle, internal_to_cartesian
+from residue_constants import TER_PATCHes
 
 
 def patch_TER(

@@ -6,7 +6,7 @@ from residue_constants import *
 from collections import namedtuple
 import itertools
 
-from cg2all.lib.libconfig import DATA_HOME
+from libconfig import DATA_HOME
 
 
 def combine_opr_s(opr_s):
