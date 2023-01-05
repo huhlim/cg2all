@@ -10,6 +10,10 @@ license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/huhlim/cg2all"
 
+[tool.poetry.scripts]
+convert_all2cg = "cg2all.script.convert_all2cg:main"
+convert_cg2all = "cg2all.script.convert_cg2all:main"
+
 [tool.poetry.dependencies]
 python = "^3.8"
 torch = "^1.11"

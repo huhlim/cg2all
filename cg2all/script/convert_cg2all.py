@@ -14,15 +14,20 @@ import numpy as np
 import torch
 import dgl
 
-BASE = pathlib.Path(__file__).parents[1].resolve()
-LIB_HOME = str(BASE / "lib")
-sys.path.insert(0, LIB_HOME)
-
-from libdata import PredictionData, create_trajectory_from_batch, create_topology_from_data
-from libcg import ResidueBasedModel, CalphaBasedModel, Martini
-from libpdb import write_SSBOND
-from libter import patch_termini
-import libmodel
+# BASE = pathlib.Path(__file__).parents[1].resolve()
+# LIB_HOME = str(BASE / "lib")
+# sys.path.insert(0, LIB_HOME)
+#
+# from libdata import PredictionData, create_trajectory_from_batch, create_topology_from_data
+# from libcg import ResidueBasedModel, CalphaBasedModel, Martini
+# from libpdb import write_SSBOND
+# from libter import patch_termini
+# import libmodel
+from cg2all.lib.libdata import PredictionData, create_trajectory_from_batch, create_topology_from_data
+from cg2all.lib.libcg import ResidueBasedModel, CalphaBasedModel, Martini
+from cg2all.lib.libpdb import write_SSBOND
+from cg2all.lib.libter import patch_termini
+import cg2all.lib.libmodel
 
 import warnings
 
