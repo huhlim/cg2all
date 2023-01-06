@@ -5,10 +5,26 @@ Convert coarse-grained protein structure to all-atom model
 A demo web page is available via _huggingface spaces_ at [https://huggingface.co/spaces/huhlim/cg2all](https://huggingface.co/spaces/huhlim/cg2all).
 
 ## Installation
+
+These steps will install Python libraries including [cg2all (this repository)](https://github.com/huhlim/cg2all), [a modified MDTraj](https://github.com/huhlim/mdtraj), and other dependent libraries. The installation steps also place executables `convert_cg2all` and `convert_all2cg` in your python binary directory.
+
+This package is tested on Linux (CentOS) and MacOS (Apple Silicon, M1).
+
+#### for CPU only
 ```bash
 pip install git+http://github.com/huhlim/cg2all
 ```
-This step will install Python libraries including [cg2all (this repository)](https://github.com/huhlim/cg2all), [a modified MDTraj](https://github.com/huhlim/mdtraj), and other dependent libraries. It also places executables `convert_cg2all` and `convert_all2cg` in your python binary directory.
+#### for CUDA (GPU) usage
+1. Install [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
+2. Create an environment with CUDA support and activate it
+```bash
+conda create --name cg2all pip cudatoolkit=11.3 dgl-cuda11.3 -c dglteam
+conda activate cg2all
+```
+3. Install this package
+```bash
+pip install git+http://github.com/huhlim/cg2all
+```
 
 ## Usages
 ### convert_cg2all
@@ -36,7 +52,8 @@ options:
   * Martini, martini: [MARTINI](http://cgmartini.nl/index.php/martini) model
 * --ckpt: Input PyTorch ckpt file (optional). If a ckpt file is given, it will override "--cg" option.
 * --time: Output JSON file for recording timing (optional).
-* --device: Specify a device to run the model (optional) You can choose "cpu", "gpu", or "cuda", or the script will detect one automatically.
+* --device: Specify a device to run the model (optional) You can choose "cpu" or "cuda", or the script will detect one automatically. </br>
+  "**cpu**" is usually faster than "cuda" unless the input/output system is really big or you provided a DCD file with many frames because it takes a lot for loading a model ckpt file on a GPU.
 
 #### an example
 ```bash
