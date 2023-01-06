@@ -14,16 +14,12 @@ import numpy as np
 import torch
 import dgl
 
-# BASE = pathlib.Path(__file__).parents[1].resolve()
-# LIB_HOME = str(BASE / "lib")
-# sys.path.insert(0, LIB_HOME)
-#
-# from libdata import PredictionData, create_trajectory_from_batch, create_topology_from_data
-# from libcg import ResidueBasedModel, CalphaBasedModel, Martini
-# from libpdb import write_SSBOND
-# from libter import patch_termini
-# import libmodel
-from cg2all.lib.libdata import PredictionData, create_trajectory_from_batch, create_topology_from_data
+from cg2all.lib.libconfig import MODEL_HOME
+from cg2all.lib.libdata import (
+    PredictionData,
+    create_trajectory_from_batch,
+    create_topology_from_data,
+)
 from cg2all.lib.libcg import ResidueBasedModel, CalphaBasedModel, Martini
 from cg2all.lib.libpdb import write_SSBOND
 from cg2all.lib.libter import patch_termini
@@ -35,11 +31,21 @@ warnings.filterwarnings("ignore")
 
 
 def main():
-    arg = argparse.ArgumentParser(prog="cg2all")
+    arg = argparse.ArgumentParser(prog="convert_cg2all")
     arg.add_argument("-p", "--pdb", dest="in_pdb_fn", required=True)
     arg.add_argument("-d", "--dcd", dest="in_dcd_fn", default=None)
     arg.add_argument("-o", "--out", "--output", dest="out_fn", required=True)
-    arg.add_argument("--ckpt", dest="ckpt_fn", default=None, required=True)
+    arg.add_argument(
+        "--cg",
+        dest="cg_model",
+        default="CalphaBasedModel",
+        # fmt:off
+        choices=["CalphaBasedModel", "CA", "ca", \
+                "ResidueBasedModel", "RES", "res", \
+                "Martini", "martini"]
+        # fmt:on
+    )
+    arg.add_argument("--ckpt", dest="ckpt_fn", default=None)
     arg.add_argument("--time", dest="time_json", default=None)
     arg.add_argument("--device", dest="device", default=None)
     arg = arg.parse_args()
@@ -51,6 +57,18 @@ def main():
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     else:
         device = torch.device(arg.device)
+
+    if arg.ckpt_fn is None:
+        if arg.cg_model is None:
+            raise ValueError("Either --cg or --ckpt argument should be given.")
+        else:
+            if arg.cg_model in ["CalphaBasedModel", "CA", "ca"]:
+                model_type = "CalphaBasedModel"
+            elif arg.cg_model in ["ResidueBasedModel", "RES", "res"]:
+                model_type = "ResidueBasedModel"
+            elif arg.cg_model in ["Martini", "martini"]:
+                model_type = "Martini"
+            arg.ckpt_fn = MODEL_HOME / f"{model_type}.ckpt"
     ckpt = torch.load(arg.ckpt_fn, map_location=device)
     config = ckpt["hyper_parameters"]
     timing["loading_ckpt"] = time.time() - timing["loading_ckpt"]

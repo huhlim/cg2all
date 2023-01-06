@@ -6,20 +6,13 @@ import argparse
 import pathlib
 import functools
 
-# BASE = pathlib.Path(__file__).parents[1].resolve()
-# LIB_HOME = str(BASE / "lib")
-# sys.path.insert(0, LIB_HOME)
-#
-# from libcg import ResidueBasedModel, CalphaBasedModel, Martini
-# from libpdb import write_SSBOND
-# from residue_constants import read_martini_topology
 from cg2all.lib.libcg import ResidueBasedModel, CalphaBasedModel, Martini
 from cg2all.lib.libpdb import write_SSBOND
 from cg2all.lib.residue_constants import read_martini_topology
 
 
 def main():
-    arg = argparse.ArgumentParser(prog="all2cg")
+    arg = argparse.ArgumentParser(prog="convert_all2cg")
     arg.add_argument("-p", "--pdb", dest="in_pdb_fn", required=True)
     arg.add_argument("-d", "--dcd", dest="in_dcd_fn", default=None)
     arg.add_argument("-o", "--out", "--output", dest="out_fn", required=True)
