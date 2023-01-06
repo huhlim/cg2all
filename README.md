@@ -1,8 +1,9 @@
 # cg2all
 Convert coarse-grained protein structure to all-atom model
 
-## Web server
+## Web server / Google Colab notebook
 A demo web page is available via _huggingface spaces_ at [https://huggingface.co/spaces/huhlim/cg2all](https://huggingface.co/spaces/huhlim/cg2all).
+A Google Colab notebook is available at [https://colab.research.google.com/github/huhlim/cg2all/blob/main/cg2all.ipynb](https://colab.research.google.com/github/huhlim/cg2all/blob/main/cg2all.ipynb).
 
 ## Installation
 
