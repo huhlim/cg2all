@@ -1,6 +1,9 @@
 # cg2all
 Convert coarse-grained protein structure to all-atom model
 
+## Web server
+A demo web page is available via _huggingface spaces_ at [https://huggingface.co/spaces/huhlim/cg2all](https://huggingface.co/spaces/huhlim/cg2all).
+
 ## Installation
 ```bash
 pip install git+http://github.com/huhlim/cg2all
