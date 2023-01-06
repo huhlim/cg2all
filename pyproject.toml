@@ -20,7 +20,7 @@ torch = "^1.11"
 dgl = "^0.9"
 e3nn = "^0.5"
 ml-collections = "^0.1.1"
-numpy = "^1.23"
+numpy = "^1.21"
 mdtraj = {git = "https://github.com/huhlim/mdtraj.git"}
 
 [tool.poetry.group.dev.dependencies]
