@@ -33,7 +33,11 @@ from typing import Dict, Optional, Union
 from se3_transformer.model.fiber import Fiber
 from se3_transformer.model.layers.convolution import ConvSE3, ConvSE3FuseLevel
 from se3_transformer.model.layers.linear import LinearSE3
-from se3_transformer.runtime.utils import degree_to_dim, aggregate_residual, unfuse_features
+from se3_transformer.runtime.utils import (
+    degree_to_dim,
+    aggregate_residual,
+    unfuse_features,
+)
 from torch.cuda.nvtx import range as nvtx_range
 
 
@@ -64,8 +68,12 @@ class AttentionSE3(nn.Module):
                     # case where features of all types are fused
                     key = key.reshape(key.shape[0], self.num_heads, -1)
                     # need to reshape queries that way to keep the same layout as keys
-                    out = torch.cat([query[str(d)] for d in self.key_fiber.degrees], dim=-1)
-                    query = out.reshape(list(query.values())[0].shape[0], self.num_heads, -1)
+                    out = torch.cat(
+                        [query[str(d)] for d in self.key_fiber.degrees], dim=-1
+                    )
+                    query = out.reshape(
+                        list(query.values())[0].shape[0], self.num_heads, -1
+                    )
                 else:
                     # features are not fused, need to fuse and reshape them
                     key = self.key_fiber.to_attention_heads(key, self.num_heads)
@@ -92,7 +100,10 @@ class AttentionSE3(nn.Module):
                     out = {}
                     for degree, channels in self.value_fiber:
                         v = value[str(degree)].view(
-                            -1, self.num_heads, channels // self.num_heads, degree_to_dim(degree)
+                            -1,
+                            self.num_heads,
+                            channels // self.num_heads,
+                            degree_to_dim(degree),
                         )
                         weights = edge_weights * v
                         res = dgl.ops.copy_e_sum(graph, weights)
@@ -135,11 +146,17 @@ class AttentionBlockSE3(nn.Module):
             fiber_edge = Fiber({})
         self.fiber_in = fiber_in
         # value_fiber has same structure as fiber_out but #channels divided by 'channels_div'
-        value_fiber = Fiber([(degree, channels // channels_div) for degree, channels in fiber_out])
+        value_fiber = Fiber(
+            [(degree, channels // channels_div) for degree, channels in fiber_out]
+        )
         # key_query_fiber has the same structure as fiber_out, but only degrees which are in in_fiber
         # (queries are merely projected, hence degrees have to match input)
         key_query_fiber = Fiber(
-            [(fe.degree, fe.channels) for fe in value_fiber if fe.degree in fiber_in.degrees]
+            [
+                (fe.degree, fe.channels)
+                for fe in value_fiber
+                if fe.degree in fiber_in.degrees
+            ]
         )
 
         self.to_key_value = ConvSE3(
@@ -167,7 +184,9 @@ class AttentionBlockSE3(nn.Module):
     ):
         with nvtx_range("AttentionBlockSE3"):
             with nvtx_range("keys / values"):
-                fused_key_value = self.to_key_value(node_features, edge_features, graph, basis)
+                fused_key_value = self.to_key_value(
+                    node_features, edge_features, graph, basis
+                )
                 key, value = self._get_key_value_from_fused(fused_key_value)
 
             with nvtx_range("queries"):

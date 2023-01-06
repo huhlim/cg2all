@@ -118,9 +118,13 @@ def rotate_x(t_ang):
 
 # internal_to_cartesian: X -- r0 -- r1 -- r2
 def internal_to_cartesian(
-    r0: np.ndarray, r1: np.ndarray, r2: np.ndarray, b_len: float, b_ang: float, t_ang: float
+    r0: np.ndarray,
+    r1: np.ndarray,
+    r2: np.ndarray,
+    b_len: float,
+    b_ang: float,
+    t_ang: float,
 ) -> np.ndarray:
-
     v1 = r0 - r1
     v2 = r0 - r2
 

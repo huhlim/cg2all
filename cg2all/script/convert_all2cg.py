@@ -20,11 +20,11 @@ def main():
         "--cg",
         dest="cg_model",
         default="CalphaBasedModel",
-        #fmt:off
+        # fmt:off
         choices=["CalphaBasedModel", "CA", "ca", \
                 "ResidueBasedModel", "RES", "res", \
                 "Martini", "martini"]
-        #fmt:on
+        # fmt:on
     )
     arg = arg.parse_args()
     #

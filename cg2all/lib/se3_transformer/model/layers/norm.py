@@ -59,22 +59,28 @@ class NormSE3(nn.Module):
                 {str(degree): nn.LayerNorm(channels) for degree, channels in fiber}
             )
 
-    def forward(self, features: Dict[str, Tensor], *args, **kwargs) -> Dict[str, Tensor]:
+    def forward(
+        self, features: Dict[str, Tensor], *args, **kwargs
+    ) -> Dict[str, Tensor]:
         with nvtx_range("NormSE3"):
             output = {}
             if hasattr(self, "group_norm"):
                 # Compute per-degree norms of features
                 norms = [
-                    features[str(d)].norm(dim=-1, keepdim=True).clamp(min=self.NORM_CLAMP)
+                    features[str(d)]
+                    .norm(dim=-1, keepdim=True)
+                    .clamp(min=self.NORM_CLAMP)
                     for d in self.fiber.degrees
                 ]
                 fused_norms = torch.cat(norms, dim=-2)
 
                 # Transform the norms only
-                new_norms = self.nonlinearity(self.group_norm(fused_norms.squeeze(-1))).unsqueeze(
-                    -1
+                new_norms = self.nonlinearity(
+                    self.group_norm(fused_norms.squeeze(-1))
+                ).unsqueeze(-1)
+                new_norms = torch.chunk(
+                    new_norms, chunks=len(self.fiber.degrees), dim=-2
                 )
-                new_norms = torch.chunk(new_norms, chunks=len(self.fiber.degrees), dim=-2)
 
                 # Scale features to the new norms
                 for norm, new_norm, d in zip(norms, new_norms, self.fiber.degrees):

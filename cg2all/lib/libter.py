@@ -15,7 +15,8 @@ def patch_TER(
 ) -> np.ndarray:
     patch = TER_PATCHes.get((TER_type, residue0.name), TER_PATCHes[TER_type, "default"])
     index_s = {
-        keyword: [None for _ in patch[keyword]] for keyword in ["delete", "define", "t_ang0_atoms"]
+        keyword: [None for _ in patch[keyword]]
+        for keyword in ["delete", "define", "t_ang0_atoms"]
     }
     #
     in_atom_s = [atom.name for atom in residue0.atoms]
@@ -34,7 +35,9 @@ def patch_TER(
             if atom.name in patch[keyword]:
                 ith_atom = patch[keyword].index(atom.name)
                 index_s[keyword][ith_atom] = atom.index
-    in_index = [atom.index for atom in residue0.atoms if atom.index not in index_s["delete"]]
+    in_index = [
+        atom.index for atom in residue0.atoms if atom.index not in index_s["delete"]
+    ]
     out_mask = [name in in_atom_s for name in out_atom_s]
     #
     n_frame = xyz0.shape[0]

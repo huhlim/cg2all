@@ -64,7 +64,7 @@ class LRSchedulerCallback(BaseCallback):
         self.logger = logger
         self.scheduler = None
 
-        self.logger.log_metadata('learning rate', {'unit': None})
+        self.logger.log_metadata("learning rate", {"unit": None})
 
     @abstractmethod
     def get_scheduler(self, optimizer, args):
@@ -74,45 +74,50 @@ class LRSchedulerCallback(BaseCallback):
         self.scheduler = self.get_scheduler(optimizer, args)
 
     def on_checkpoint_load(self, checkpoint):
-        self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
 
     def on_checkpoint_save(self, checkpoint):
-        checkpoint['scheduler_state_dict'] = self.scheduler.state_dict()
+        checkpoint["scheduler_state_dict"] = self.scheduler.state_dict()
 
     def on_epoch_end(self):
         if self.logger is not None:
-            self.logger.log_metrics({'learning rate': self.scheduler.get_last_lr()[0]}, step=self.scheduler.last_epoch)
+            self.logger.log_metrics(
+                {"learning rate": self.scheduler.get_last_lr()[0]},
+                step=self.scheduler.last_epoch,
+            )
         self.scheduler.step()
 
 
 class QM9MetricCallback(BaseCallback):
-    """ Logs the rescaled mean absolute error for QM9 regression tasks """
+    """Logs the rescaled mean absolute error for QM9 regression tasks"""
 
-    def __init__(self, logger, targets_std, prefix=''):
+    def __init__(self, logger, targets_std, prefix=""):
         self.mae = MeanAbsoluteError()
         self.logger = logger
         self.targets_std = targets_std
         self.prefix = prefix
-        self.best_mae = float('inf')
+        self.best_mae = float("inf")
         self.last_mae = None
 
-        self.logger.log_metadata(f'{self.prefix} MAE', {'unit': None})
-        self.logger.log_metadata(f'{self.prefix} best MAE', {'unit': None})
+        self.logger.log_metadata(f"{self.prefix} MAE", {"unit": None})
+        self.logger.log_metadata(f"{self.prefix} best MAE", {"unit": None})
 
     def on_validation_step(self, input, target, pred):
         self.mae(pred.detach(), target.detach())
 
     def on_validation_end(self, epoch=None):
         mae = self.mae.compute() * self.targets_std
-        logging.info(f'{self.prefix} MAE: {mae}')
-        self.logger.log_metrics({f'{self.prefix} MAE': mae}, epoch)
+        logging.info(f"{self.prefix} MAE: {mae}")
+        self.logger.log_metrics({f"{self.prefix} MAE": mae}, epoch)
         self.best_mae = min(self.best_mae, mae)
         self.last_mae = mae
 
     def on_fit_end(self):
-        if self.best_mae != float('inf'):
-            self.logger.log_metrics({f'{self.prefix} best MAE': self.best_mae})
-            self.logger.log_metrics({f'{self.prefix} loss': self.last_mae / self.targets_std})
+        if self.best_mae != float("inf"):
+            self.logger.log_metrics({f"{self.prefix} best MAE": self.best_mae})
+            self.logger.log_metrics(
+                {f"{self.prefix} loss": self.last_mae / self.targets_std}
+            )
 
 
 class QM9LRSchedulerCallback(LRSchedulerCallback):
@@ -121,12 +126,20 @@ class QM9LRSchedulerCallback(LRSchedulerCallback):
         self.epochs = epochs
 
     def get_scheduler(self, optimizer, args):
-        min_lr = args.min_learning_rate if args.min_learning_rate else args.learning_rate / 10.0
-        return torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, self.epochs, eta_min=min_lr)
+        min_lr = (
+            args.min_learning_rate
+            if args.min_learning_rate
+            else args.learning_rate / 10.0
+        )
+        return torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+            optimizer, self.epochs, eta_min=min_lr
+        )
 
 
 class PerformanceCallback(BaseCallback):
-    def __init__(self, logger, batch_size: int, warmup_epochs: int = 1, mode: str = 'train'):
+    def __init__(
+        self, logger, batch_size: int, warmup_epochs: int = 1, mode: str = "train"
+    ):
         self.batch_size = batch_size
         self.warmup_epochs = warmup_epochs
         self.epoch = 0
@@ -134,11 +147,11 @@ class PerformanceCallback(BaseCallback):
         self.mode = mode
         self.logger = logger
 
-        logger.log_metadata(f"throughput_{self.mode}", {'unit': 'molecules/s'})
-        logger.log_metadata(f"total_time_{self.mode}", {'unit': 's'})
-        logger.log_metadata(f"latency_{self.mode}_mean", {'unit': 's'})
+        logger.log_metadata(f"throughput_{self.mode}", {"unit": "molecules/s"})
+        logger.log_metadata(f"total_time_{self.mode}", {"unit": "s"})
+        logger.log_metadata(f"latency_{self.mode}_mean", {"unit": "s"})
         for level in [90, 95, 99]:
-            logger.log_metadata(f"latency_{self.mode}_{level}", {'unit': 's'})
+            logger.log_metadata(f"latency_{self.mode}_{level}", {"unit": "s"})
 
     def on_batch_start(self):
         if self.epoch >= self.warmup_epochs:
@@ -147,7 +160,7 @@ class PerformanceCallback(BaseCallback):
     def _log_perf(self):
         stats = self.process_performance_stats()
         for k, v in stats.items():
-            logging.info(f'performance {k}: {v}')
+            logging.info(f"performance {k}: {v}")
 
         self.logger.log_metrics(stats)
 

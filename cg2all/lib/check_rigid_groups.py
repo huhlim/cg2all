@@ -86,7 +86,9 @@ class PDBset(torch.utils.data.Dataset):
                 ssbond_index[cys_i] = cys_j
         data.ndata["ssbond_index"] = ssbond_index
         #
-        edge_feat = torch.zeros((data.num_edges(), 3), dtype=self.dtype)  # bonded / ssbond / space
+        edge_feat = torch.zeros(
+            (data.num_edges(), 3), dtype=self.dtype
+        )  # bonded / ssbond / space
         for i, cont in enumerate(cg.continuous[0]):
             if cont and data.has_edges_between(i - 1, i):  # i-1 and i is connected
                 eid = data.edge_ids(i - 1, i)
@@ -102,12 +104,20 @@ class PDBset(torch.utils.data.Dataset):
         edge_feat[edge_feat.sum(dim=-1) == 0.0, 2] = 1.0
         data.edata["edge_feat_0"] = edge_feat[..., None]
         #
-        data.ndata["atomic_radius"] = torch.as_tensor(cg.atomic_radius, dtype=self.dtype)
+        data.ndata["atomic_radius"] = torch.as_tensor(
+            cg.atomic_radius, dtype=self.dtype
+        )
         data.ndata["atomic_mass"] = torch.as_tensor(cg.atomic_mass, dtype=self.dtype)
-        data.ndata["input_atom_mask"] = torch.as_tensor(cg.atom_mask_cg, dtype=self.dtype)
+        data.ndata["input_atom_mask"] = torch.as_tensor(
+            cg.atom_mask_cg, dtype=self.dtype
+        )
         data.ndata["output_atom_mask"] = torch.as_tensor(cg.atom_mask, dtype=self.dtype)
-        data.ndata["pdb_atom_mask"] = torch.as_tensor(cg.atom_mask_pdb, dtype=self.dtype)
-        data.ndata["heavy_atom_mask"] = torch.as_tensor(cg.atom_mask_heavy, dtype=self.dtype)
+        data.ndata["pdb_atom_mask"] = torch.as_tensor(
+            cg.atom_mask_pdb, dtype=self.dtype
+        )
+        data.ndata["heavy_atom_mask"] = torch.as_tensor(
+            cg.atom_mask_heavy, dtype=self.dtype
+        )
         data.ndata["output_xyz"] = torch.as_tensor(cg.R[0], dtype=self.dtype)
         data.ndata["output_xyz_alt"] = torch.as_tensor(cg.R_alt[0], dtype=self.dtype)
         #
@@ -127,7 +137,9 @@ class PDBset(torch.utils.data.Dataset):
         data.ndata["input_rot"] = rot
         data.ndata["input_tr"] = tr
         sc = torch.as_tensor(cg.torsion[self.input_index][..., 0], dtype=self.dtype)
-        data.ndata["input_sc"] = torch.zeros((sc.size(0), MAX_TORSION, 2), dtype=self.dtype)
+        data.ndata["input_sc"] = torch.zeros(
+            (sc.size(0), MAX_TORSION, 2), dtype=self.dtype
+        )
         data.ndata["input_sc"][..., 0] = torch.cos(sc)
         data.ndata["input_sc"][..., 1] = torch.sin(sc)
         return pdb_fn, data

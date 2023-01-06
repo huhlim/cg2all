@@ -52,10 +52,13 @@ class Fiber(dict):
     def __init__(self, structure):
         if isinstance(structure, dict):
             structure = [
-                FiberEl(int(d), int(m)) for d, m in sorted(structure.items(), key=lambda x: x[1])
+                FiberEl(int(d), int(m))
+                for d, m in sorted(structure.items(), key=lambda x: x[1])
             ]
         elif not isinstance(structure[0], FiberEl):
-            structure = list(map(lambda t: FiberEl(*t), sorted(structure, key=lambda x: x[1])))
+            structure = list(
+                map(lambda t: FiberEl(*t), sorted(structure, key=lambda x: x[1]))
+            )
         self.structure = structure
         super().__init__({d: m for d, m in self.structure})
 
@@ -112,7 +115,9 @@ class Fiber(dict):
         If other is a fiber, add the multiplicities of the fibers together.
         """
         if isinstance(other, Fiber):
-            return Fiber({t.degree: t.channels + other[t.degree] for t in self.structure})
+            return Fiber(
+                {t.degree: t.channels + other[t.degree] for t in self.structure}
+            )
         elif isinstance(other, int):
             return Fiber({t.degree: t.channels + other for t in self.structure})
 
@@ -141,7 +146,9 @@ class Fiber(dict):
     def to_attention_heads(self, tensors: Dict[str, Tensor], num_heads: int):
         # dict(N, num_channels, 2d+1) -> (N, num_heads, -1)
         fibers = [
-            tensors[str(degree)].reshape(*tensors[str(degree)].shape[:-2], num_heads, -1)
+            tensors[str(degree)].reshape(
+                *tensors[str(degree)].shape[:-2], num_heads, -1
+            )
             for degree in self.degrees
         ]
         fibers = torch.cat(fibers, -1)

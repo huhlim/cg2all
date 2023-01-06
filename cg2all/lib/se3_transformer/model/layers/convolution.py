@@ -229,7 +229,9 @@ class ConvSE3(nn.Module):
         unique_channels_out = len(channels_out_set) == 1
         degrees_up_to_max = list(range(max_degree + 1))
         common_args = dict(
-            edge_dim=fiber_edge[0] + 1, use_layer_norm=use_layer_norm, nonlinearity=nonlinearity
+            edge_dim=fiber_edge[0] + 1,
+            use_layer_norm=use_layer_norm,
+            nonlinearity=nonlinearity,
         )
 
         if (
@@ -355,13 +357,18 @@ class ConvSE3(nn.Module):
             if self.used_fuse_level == ConvSE3FuseLevel.FULL:
                 in_features_fused = torch.cat(in_features, dim=-1)
                 out = self.conv_checkpoint(
-                    self.conv, in_features_fused, invariant_edge_feats, basis["fully_fused"]
+                    self.conv,
+                    in_features_fused,
+                    invariant_edge_feats,
+                    basis["fully_fused"],
                 )
 
                 if not self.allow_fused_output or self.self_interaction or self.pool:
                     out = unfuse_features(out, self.fiber_out.degrees)
 
-            elif self.used_fuse_level == ConvSE3FuseLevel.PARTIAL and hasattr(self, "conv_out"):
+            elif self.used_fuse_level == ConvSE3FuseLevel.PARTIAL and hasattr(
+                self, "conv_out"
+            ):
                 in_features_fused = torch.cat(in_features, dim=-1)
                 for degree_out in self.fiber_out.degrees:
                     basis_used = basis[f"out{degree_out}_fused"]
@@ -375,7 +382,9 @@ class ConvSE3(nn.Module):
                         basis_used,
                     )
 
-            elif self.used_fuse_level == ConvSE3FuseLevel.PARTIAL and hasattr(self, "conv_in"):
+            elif self.used_fuse_level == ConvSE3FuseLevel.PARTIAL and hasattr(
+                self, "conv_in"
+            ):
                 out = 0
                 for degree_in, feature in zip(self.fiber_in.degrees, in_features):
                     out = out + self.conv_checkpoint(
@@ -395,7 +404,10 @@ class ConvSE3(nn.Module):
                         basis_used = basis.get(dict_key, None)
                         out_feature = out_feature + self._try_unpad(
                             self.conv_checkpoint(
-                                self.conv[dict_key], feature, invariant_edge_feats, basis_used
+                                self.conv[dict_key],
+                                feature,
+                                invariant_edge_feats,
+                                basis_used,
                             ),
                             basis_used,
                         )
@@ -406,12 +418,16 @@ class ConvSE3(nn.Module):
                     with nvtx_range(f"self interaction"):
                         dst_features = node_feats[str(degree_out)][dst]
                         kernel_self = self.to_kernel_self[str(degree_out)]
-                        out[str(degree_out)] = out[str(degree_out)] + kernel_self @ dst_features
+                        out[str(degree_out)] = (
+                            out[str(degree_out)] + kernel_self @ dst_features
+                        )
 
                 if self.pool:
                     with nvtx_range(f"pooling"):
                         if isinstance(out, dict):
-                            out[str(degree_out)] = dgl.ops.copy_e_sum(graph, out[str(degree_out)])
+                            out[str(degree_out)] = dgl.ops.copy_e_sum(
+                                graph, out[str(degree_out)]
+                            )
                         else:
                             out = dgl.ops.copy_e_sum(graph, out)
             return out

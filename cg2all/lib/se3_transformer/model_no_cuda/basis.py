@@ -36,7 +36,9 @@ from se3_transformer.runtime.utils import degree_to_dim
 @lru_cache(maxsize=None)
 def get_clebsch_gordon(J: int, d_in: int, d_out: int, device) -> Tensor:
     """Get the (cached) Q^{d_out,d_in}_J matrices from equation (8)"""
-    return o3.wigner_3j(J, d_in, d_out, dtype=torch.float64, device=device).permute(2, 1, 0)
+    return o3.wigner_3j(J, d_in, d_out, dtype=torch.float64, device=device).permute(
+        2, 1, 0
+    )
 
 
 @lru_cache(maxsize=None)
@@ -83,7 +85,11 @@ def get_basis_script(
             for freq_idx, J in enumerate(range(abs(d_in - d_out), d_in + d_out + 1)):
                 Q_J = clebsch_gordon[idx][freq_idx]
                 K_Js.append(
-                    torch.einsum("n f, k l f -> n l k", spherical_harmonics[J].float(), Q_J.float())
+                    torch.einsum(
+                        "n f, k l f -> n l k",
+                        spherical_harmonics[J].float(),
+                        Q_J.float(),
+                    )
                 )
 
             basis[key] = torch.stack(K_Js, 2)  # Stack on second dim so order is n l f k
@@ -138,7 +144,12 @@ def update_basis_with_fused(
     for d_in in range(max_degree + 1):
         sum_freq = sum([degree_to_dim(min(d, d_in)) for d in range(max_degree + 1)])
         basis_fused = torch.zeros(
-            num_edges, degree_to_dim(d_in), sum_freq, sum_dim, device=device, dtype=dtype
+            num_edges,
+            degree_to_dim(d_in),
+            sum_freq,
+            sum_dim,
+            device=device,
+            dtype=dtype,
         )
         acc_d, acc_f = 0, 0
         for d_out in range(max_degree + 1):
@@ -163,14 +174,16 @@ def update_basis_with_fused(
                 for d_out in range(max_degree + 1)
             ]
         )
-        basis_fused = torch.zeros(num_edges, sum_dim, sum_freq, sum_dim, device=device, dtype=dtype)
+        basis_fused = torch.zeros(
+            num_edges, sum_dim, sum_freq, sum_dim, device=device, dtype=dtype
+        )
 
         acc_d, acc_f = 0, 0
         for d_out in range(max_degree + 1):
             b = basis[f"out{d_out}_fused"]
-            basis_fused[:, :, acc_f : acc_f + b.shape[2], acc_d : acc_d + degree_to_dim(d_out)] = b[
-                :, :, :, : degree_to_dim(d_out)
-            ]
+            basis_fused[
+                :, :, acc_f : acc_f + b.shape[2], acc_d : acc_d + degree_to_dim(d_out)
+            ] = b[:, :, :, : degree_to_dim(d_out)]
             acc_f += b.shape[2]
             acc_d += degree_to_dim(d_out)
 

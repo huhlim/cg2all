@@ -34,7 +34,13 @@ from torch_basics import (
 
 
 def loss_f(
-    batch, ret, loss_weight, use_alt=True, loss_prev=None, RIGID_OPs=None, TORSION_PARs=None
+    batch,
+    ret,
+    loss_weight,
+    use_alt=True,
+    loss_prev=None,
+    RIGID_OPs=None,
+    TORSION_PARs=None,
 ):
     R = ret["R"]
     opr_bb = ret["opr_bb"]
@@ -54,9 +60,15 @@ def loss_f(
     if loss_weight.get("v_cntr", 0.0) > 0.0:
         loss["v_cntr"] = loss_f_v_cntr(batch, R) * loss_weight.v_cntr
     if loss_weight.get("FAPE_CA", 0.0) > 0.0:
-        loss["FAPE_CA"] = loss_f_FAPE_CA(batch, R, opr_bb, d_clamp=loss_weight.FAPE_d_clamp) * loss_weight.FAPE_CA
+        loss["FAPE_CA"] = (
+            loss_f_FAPE_CA(batch, R, opr_bb, d_clamp=loss_weight.FAPE_d_clamp)
+            * loss_weight.FAPE_CA
+        )
     if loss_weight.get("FAPE_all", 0.0) > 0.0:
-        loss["FAPE_all"] = loss_f_FAPE_all(batch, R, opr_bb, d_clamp=loss_weight.FAPE_d_clamp) * loss_weight.FAPE_all
+        loss["FAPE_all"] = (
+            loss_f_FAPE_all(batch, R, opr_bb, d_clamp=loss_weight.FAPE_d_clamp)
+            * loss_weight.FAPE_all
+        )
     if loss_weight.get("rotation_matrix", 0.0) > 0.0:
         loss["rotation_matrix"] = (
             loss_f_rotation_matrix(batch, ret["bb"], ret.get("bb0", None))
@@ -64,10 +76,13 @@ def loss_f(
         )
     if loss_weight.get("bonded_energy", 0.0) > 0.0:
         loss["bonded_energy"] = (
-            loss_f_bonded_energy(batch, R, weight_s=(1.0, 0.5)) + loss_f_bonded_energy_aux(batch, R)
+            loss_f_bonded_energy(batch, R, weight_s=(1.0, 0.5))
+            + loss_f_bonded_energy_aux(batch, R)
         ) * loss_weight.bonded_energy
     if loss_weight.get("backbone_torsion", 0.0) > 0.0:
-        loss["backbone_torsion"] = loss_f_backbone_torsion(batch, R) * loss_weight.backbone_torsion
+        loss["backbone_torsion"] = (
+            loss_f_backbone_torsion(batch, R) * loss_weight.backbone_torsion
+        )
     if loss_weight.get("torsion_angle", 0.0) > 0.0:
         loss["torsion_angle"] = (
             loss_f_torsion_angle(batch, ret["sc"], sc0=ret.get("sc0", None))
@@ -108,11 +123,17 @@ def loss_f(
 
 def get_output_xyz_ref(batch: dgl.DGLGraph, R: torch.Tensor) -> torch.Tensor:
     mask = batch.ndata["heavy_atom_mask"]
-    d = torch.sum(torch.pow(R - batch.ndata["output_xyz"], 2).sum(dim=-1) * mask, dim=-1)
-    d_alt = torch.sum(torch.pow(R - batch.ndata["output_xyz_alt"], 2).sum(dim=-1) * mask, dim=-1)
+    d = torch.sum(
+        torch.pow(R - batch.ndata["output_xyz"], 2).sum(dim=-1) * mask, dim=-1
+    )
+    d_alt = torch.sum(
+        torch.pow(R - batch.ndata["output_xyz_alt"], 2).sum(dim=-1) * mask, dim=-1
+    )
     #
     xyz = torch.where(
-        (d <= d_alt)[:, None, None], batch.ndata["output_xyz"], batch.ndata["output_xyz_alt"]
+        (d <= d_alt)[:, None, None],
+        batch.ndata["output_xyz"],
+        batch.ndata["output_xyz_alt"],
     ).detach()
     return xyz
 
@@ -128,10 +149,14 @@ def loss_f_v_cntr(batch: dgl.DGLGraph, R: torch.Tensor):
     r_cntr = get_residue_center_of_mass(R, batch.ndata["atomic_mass"])
     v_cntr = r_cntr - R[:, ATOM_INDEX_CA]
     loss_angle = torch.mean(
-        torch.abs(1.0 - inner_product(v_norm_safe(v_cntr), v_norm(batch.ndata["v_cntr"])))
+        torch.abs(
+            1.0 - inner_product(v_norm_safe(v_cntr), v_norm(batch.ndata["v_cntr"]))
+        )
     )
     #
-    loss_distance = torch.mean(torch.abs(v_size(v_cntr) - v_size(batch.ndata["v_cntr"])))
+    loss_distance = torch.mean(
+        torch.abs(v_size(v_cntr) - v_size(batch.ndata["v_cntr"]))
+    )
     return loss_angle + loss_distance * 10.0
 
 
@@ -185,7 +210,9 @@ def loss_f_FAPE_CA(
         r = rotate_vector_inv(_bb[:, :, :3], _R[None, :] - _bb[:, :, 3])
         r_ref = rotate_vector_inv(bb_ref[:, :, :3], R_ref[None, :] - bb_ref[:, :, 3])
         dr = r - r_ref
-        d = torch.clamp(torch.sqrt(torch.pow(dr, 2).sum(dim=-1) + EPS**2), max=d_clamp)
+        d = torch.clamp(
+            torch.sqrt(torch.pow(dr, 2).sum(dim=-1) + EPS**2), max=d_clamp
+        )
         loss = loss + torch.mean(d)
         #
         first = last
@@ -210,9 +237,13 @@ def loss_f_FAPE_all(
         _R = R[first:last]
         _bb = bb[first:last][:, None]  # shape=(N, 1, 4, 3)
         bb_ref = data.ndata["correct_bb"][:, None]
-        R_ref = data.ndata["output_xyz_ref"]  # use symmetry-corrected reference structure
+        R_ref = data.ndata[
+            "output_xyz_ref"
+        ]  # use symmetry-corrected reference structure
         #
-        r = rotate_vector_inv(_bb[:, :, None, :3], _R[None, :] - _bb[..., 3, :][:, None])
+        r = rotate_vector_inv(
+            _bb[:, :, None, :3], _R[None, :] - _bb[..., 3, :][:, None]
+        )
         r_ref = rotate_vector_inv(
             bb_ref[:, :, None, :3], R_ref[None, :] - bb_ref[..., 3, :][:, None]
         )
@@ -284,7 +315,9 @@ def loss_f_bonded_energy_aux(batch: dgl.DGLGraph, R: torch.Tensor):
         R_pro_N = R[proline, ATOM_INDEX_N]
         R_pro_CD = R[proline, ATOM_INDEX_PRO_CD]
         d_pro = v_size(R_pro_N - R_pro_CD)
-        bond_energy_pro = torch.sum(torch.abs(d_pro - BOND_LENGTH_PROLINE_RING)) / R.size(0)
+        bond_energy_pro = torch.sum(
+            torch.abs(d_pro - BOND_LENGTH_PROLINE_RING)
+        ) / R.size(0)
     else:
         bond_energy_pro = 0.0
 
@@ -341,7 +374,9 @@ def loss_f_backbone_torsion(batch: dgl.DGLGraph, R: torch.Tensor):
     angle_ref = torsion_angle(r_ref)
     #
     loss = torch.sum(
-        1.0 - (torch.cos(angle) * torch.cos(angle_ref)) - (torch.sin(angle) * torch.sin(angle_ref))
+        1.0
+        - (torch.cos(angle) * torch.cos(angle_ref))
+        - (torch.sin(angle) * torch.sin(angle_ref))
     )
     loss = loss / angle.size(0)
     return loss
@@ -454,14 +489,20 @@ def loss_f_atomic_clash(
 
 
 def loss_f_torsion_energy(
-    batch: dgl.DGLGraph, R: torch.Tensor, ss: torch.Tensor, TORSION_PARs, energy_clamp=0.0
+    batch: dgl.DGLGraph,
+    R: torch.Tensor,
+    ss: torch.Tensor,
+    TORSION_PARs,
+    energy_clamp=0.0,
 ):
     residue_type = batch.ndata["residue_type"]
     n_residue = residue_type.size(0)
     par = TORSION_PARs[0][ss, residue_type]
     atom_index = TORSION_PARs[1][residue_type]
     #
-    r = torch.take_along_dim(R, atom_index.view(n_residue, -1, 1), 1).view(n_residue, -1, 4, 3)
+    r = torch.take_along_dim(R, atom_index.view(n_residue, -1, 1), 1).view(
+        n_residue, -1, 4, 3
+    )
     t_ang = torsion_angle(r)
     #
     t_ang = (t_ang[..., None] + par[..., 3]) * par[..., 1] - par[..., 2]

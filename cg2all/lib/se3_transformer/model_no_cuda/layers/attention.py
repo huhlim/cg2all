@@ -33,7 +33,11 @@ from typing import Dict, Optional, Union
 from se3_transformer.model_no_cuda.fiber import Fiber
 from se3_transformer.model_no_cuda.layers.convolution import ConvSE3, ConvSE3FuseLevel
 from se3_transformer.model_no_cuda.layers.linear import LinearSE3
-from se3_transformer.runtime.utils import degree_to_dim, aggregate_residual, unfuse_features
+from se3_transformer.runtime.utils import (
+    degree_to_dim,
+    aggregate_residual,
+    unfuse_features,
+)
 
 
 class AttentionSE3(nn.Module):
@@ -87,7 +91,10 @@ class AttentionSE3(nn.Module):
             out = {}
             for degree, channels in self.value_fiber:
                 v = value[str(degree)].view(
-                    -1, self.num_heads, channels // self.num_heads, degree_to_dim(degree)
+                    -1,
+                    self.num_heads,
+                    channels // self.num_heads,
+                    degree_to_dim(degree),
                 )
                 weights = edge_weights * v
                 res = dgl.ops.copy_e_sum(graph, weights)
@@ -130,11 +137,17 @@ class AttentionBlockSE3(nn.Module):
             fiber_edge = Fiber({})
         self.fiber_in = fiber_in
         # value_fiber has same structure as fiber_out but #channels divided by 'channels_div'
-        value_fiber = Fiber([(degree, channels // channels_div) for degree, channels in fiber_out])
+        value_fiber = Fiber(
+            [(degree, channels // channels_div) for degree, channels in fiber_out]
+        )
         # key_query_fiber has the same structure as fiber_out, but only degrees which are in in_fiber
         # (queries are merely projected, hence degrees have to match input)
         key_query_fiber = Fiber(
-            [(fe.degree, fe.channels) for fe in value_fiber if fe.degree in fiber_in.degrees]
+            [
+                (fe.degree, fe.channels)
+                for fe in value_fiber
+                if fe.degree in fiber_in.degrees
+            ]
         )
 
         self.to_key_value = ConvSE3(

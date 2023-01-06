@@ -123,4 +123,3 @@ def convert_all2cg(in_pdb_fn, out_fn, model_type="CalphaBasedModel", in_dcd_fn=N
             write_SSBOND(out_fn, cg.top, cg.ssbond_s)
     else:
         cg.write_cg(cg.R_cg, dcd_fn=out_fn)
-

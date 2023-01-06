@@ -47,7 +47,9 @@ class Device:
 
     def get_cpu_affinity(self):
         affinity_string = ""
-        for j in pynvml.nvmlDeviceGetCpuAffinity(self.handle, Device._nvml_affinity_elements):
+        for j in pynvml.nvmlDeviceGetCpuAffinity(
+            self.handle, Device._nvml_affinity_elements
+        ):
             # assume nvml returns list of 64 bit ints
             affinity_string = "{:064b}".format(j) + affinity_string
 
@@ -80,7 +82,10 @@ def check_socket_affinities(socket_affinities):
     # sets of cores should be either identical or disjoint
     for i, j in itertools.product(socket_affinities, socket_affinities):
         if not set(i) == set(j) and not set(i).isdisjoint(set(j)):
-            raise RuntimeError(f"Sets of cores should be either identical or disjoint, " f"but got {i} and {j}.")
+            raise RuntimeError(
+                "Sets of cores should be either identical or disjoint, "
+                f"but got {i} and {j}."
+            )
 
 
 def get_socket_affinities(nproc_per_node, exclude_unavailable_cores=True):
@@ -89,7 +94,9 @@ def get_socket_affinities(nproc_per_node, exclude_unavailable_cores=True):
 
     if exclude_unavailable_cores:
         available_cores = os.sched_getaffinity(0)
-        socket_affinities = [list(set(affinity) & available_cores) for affinity in socket_affinities]
+        socket_affinities = [
+            list(set(affinity) & available_cores) for affinity in socket_affinities
+        ]
 
     check_socket_affinities(socket_affinities)
 
@@ -143,7 +150,9 @@ def set_single_unique_affinity(gpu_id, nproc_per_node):
 
     # remove siblings
     for idx, socket_affinity in enumerate(socket_affinities):
-        socket_affinities[idx] = list(set(socket_affinity) - set(siblings_dict.values()))
+        socket_affinities[idx] = list(
+            set(socket_affinity) - set(siblings_dict.values())
+        )
 
     affinities = []
     assigned = []
@@ -177,7 +186,9 @@ def set_socket_unique_affinity(gpu_id, nproc_per_node, mode, balanced=True):
 
     # remove hyperthreading siblings
     for idx, socket_affinity in enumerate(socket_affinities):
-        socket_affinities[idx] = list(set(socket_affinity) - set(siblings_dict.values()))
+        socket_affinities[idx] = list(
+            set(socket_affinity) - set(siblings_dict.values())
+        )
 
     socket_affinities_to_device_ids = collections.defaultdict(list)
 
@@ -187,20 +198,24 @@ def set_socket_unique_affinity(gpu_id, nproc_per_node, mode, balanced=True):
     # compute minimal number of physical cores per GPU across all GPUs and
     # sockets, code assigns this number of cores per GPU if balanced == True
     min_physical_cores_per_gpu = min(
-        [len(cores) // len(gpus) for cores, gpus in socket_affinities_to_device_ids.items()]
+        [
+            len(cores) // len(gpus)
+            for cores, gpus in socket_affinities_to_device_ids.items()
+        ]
     )
 
     for socket_affinity, device_ids in socket_affinities_to_device_ids.items():
         devices_per_group = len(device_ids)
         if balanced:
             cores_per_device = min_physical_cores_per_gpu
-            socket_affinity = socket_affinity[: devices_per_group * min_physical_cores_per_gpu]
+            socket_affinity = socket_affinity[
+                : devices_per_group * min_physical_cores_per_gpu
+            ]
         else:
             cores_per_device = len(socket_affinity) // devices_per_group
 
         for group_id, device_id in enumerate(device_ids):
             if device_id == gpu_id:
-
                 # In theory there should be no difference in performance between
                 # 'interleaved' and 'continuous' pattern on Intel-based DGX-1,
                 # but 'continuous' should be better for DGX A100 because on AMD
@@ -213,7 +228,13 @@ def set_socket_unique_affinity(gpu_id, nproc_per_node, mode, balanced=True):
                 if mode == "interleaved":
                     affinity = list(socket_affinity[group_id::devices_per_group])
                 elif mode == "continuous":
-                    affinity = list(socket_affinity[group_id * cores_per_device: (group_id + 1) * cores_per_device])
+                    affinity = list(
+                        socket_affinity[
+                            group_id
+                            * cores_per_device : (group_id + 1)
+                            * cores_per_device
+                        ]
+                    )
                 else:
                     raise RuntimeError("Unknown set_socket_unique_affinity mode")
 
@@ -224,11 +245,15 @@ def set_socket_unique_affinity(gpu_id, nproc_per_node, mode, balanced=True):
                 # constraints, siblings are re-added unconditionally, in the
                 # worst case unavailable logical core will be ignored by
                 # os.sched_setaffinity().
-                affinity += [siblings_dict[aff] for aff in affinity if aff in siblings_dict]
+                affinity += [
+                    siblings_dict[aff] for aff in affinity if aff in siblings_dict
+                ]
                 os.sched_setaffinity(0, affinity)
 
 
-def set_affinity(gpu_id, nproc_per_node, mode="socket_unique_continuous", balanced=True):
+def set_affinity(
+    gpu_id, nproc_per_node, mode="socket_unique_continuous", balanced=True
+):
     """
     The process is assigned with a proper CPU affinity which matches hardware
     architecture on a given platform. Usually it improves and stabilizes
