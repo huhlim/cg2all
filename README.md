@@ -35,12 +35,17 @@ options:
 * --time: Output JSON file for recording timing (optional).
 * --device: Specify a device to run the model (optional) You can choose "cpu", "gpu", or "cuda", or the script will detect one automatically.
 
+#### an example
+```bash
+convert_cg2all -p test/1ab1_A.calpha.pdb -o test/1ab1_A.calpha.all.pdb --cg CalphaBasedModel
+```
+
 <hr/>
 
 ### convert_all2cg
 convert an all-atom protein structure to coarse-grained model
 ```bash
-usage: all2cg [-h] -p IN_PDB_FN [-d IN_DCD_FN] -o OUT_FN [--cg {CalphaBasedModel,CA,ca,ResidueBasedModel,RES,res,Martini,martini}]
+usage: convert_all2cg [-h] -p IN_PDB_FN [-d IN_DCD_FN] -o OUT_FN [--cg {CalphaBasedModel,CA,ca,ResidueBasedModel,RES,res,Martini,martini}]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -57,3 +62,9 @@ optional arguments:
   * CalphaBasedModel, CA, ca: the C-alpha atom for a residue
   * ResidueBasedModel, RES, res: the center of mass of a residue for the residue
   * Martini, martini: [MARTINI](http://cgmartini.nl/index.php/martini) model
+  
+#### an example
+```bash
+convert_all2cg -p test/1ab1_A.pdb -o test/1ab1_A.calpha.pdb --cg CalphaBasedModel
+```
+
