@@ -80,8 +80,8 @@ def main():
         cg_model = ResidueBasedModel
     elif config["cg_model"] == "Martini":
         cg_model = Martini
-    config = libmodel.set_model_config(config, cg_model)
-    model = libmodel.Model(config, cg_model, compute_loss=False)
+    config = cg2all.lib.libmodel.set_model_config(config, cg_model)
+    model = cg2all.lib.libmodel.Model(config, cg_model, compute_loss=False)
     #
     state_dict = ckpt["state_dict"]
     for key in list(state_dict):
