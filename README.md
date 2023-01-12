@@ -2,7 +2,7 @@
 Convert coarse-grained protein structure to all-atom model
 
 ## Web server / Google Colab notebook
-A demo web page is available via _huggingface spaces_ at [https://huggingface.co/spaces/huhlim/cg2all](https://huggingface.co/spaces/huhlim/cg2all).
+A demo web page is available via _huggingface spaces_ at [https://huggingface.co/spaces/huhlim/cg2all](https://huggingface.co/spaces/huhlim/cg2all).</br>
 A Google Colab notebook is available at [https://colab.research.google.com/github/huhlim/cg2all/blob/main/cg2all.ipynb](https://colab.research.google.com/github/huhlim/cg2all/blob/main/cg2all.ipynb).
 
 ## Installation
@@ -61,9 +61,14 @@ options:
   "**cpu**" is usually faster than "cuda" unless the input/output system is really big or you provided a DCD file with many frames because it takes a lot for loading a model ckpt file on a GPU.
 * --proc: Specify the number of threads for loading input data. It is only used for dealing with a DCD file. (optional, default=OMP_NUM_THREADS or 1)
 
-#### an example
+#### examples
+Conversion of a PDB file
 ```bash
-convert_cg2all -p test/1ab1_A.calpha.pdb -o test/1ab1_A.calpha.all.pdb --cg CalphaBasedModel
+convert_cg2all -p tests/1ab1_A.calpha.pdb -o tests/1ab1_A.calpha.all.pdb --cg CalphaBasedModel
+```
+Conversion of a DCD trajectory file
+```bash
+convert_cg2all -p tests/1jni.calpha.pdb -d tests/1jni.calpha.dcd -o tests/1jni.calpha.all.dcd --cg CalphaBasedModel
 ```
 
 <hr/>
@@ -91,6 +96,6 @@ optional arguments:
   
 #### an example
 ```bash
-convert_all2cg -p test/1ab1_A.pdb -o test/1ab1_A.calpha.pdb --cg CalphaBasedModel
+convert_all2cg -p tests/1ab1_A.pdb -o tests/1ab1_A.calpha.pdb --cg CalphaBasedModel
 ```
 
