@@ -284,9 +284,11 @@ class PredictionData(Dataset):
         if self.dcd_fn is None:
             self.n_frame = 1
         else:
-            self.n_frame = mdtraj.load(
-                self.dcd_fn, top=self.pdb_fn, atom_indices=[0]
-            ).n_frames
+            self.cg = self.pdb_to_cg(self.pdb_fn, dcd_fn=self.dcd_fn)
+            self.n_frame = self.cg.n_frame
+            # self.n_frame = mdtraj.load(
+            #     self.dcd_fn, top=self.pdb_fn, atom_indices=[0]
+            # ).n_frames
 
     def __len__(self):
         return self.n_frame
@@ -297,10 +299,13 @@ class PredictionData(Dataset):
     def __getitem__(self, index):
         if self.dcd_fn is None:
             cg = self.pdb_to_cg(self.pdb_fn)
+            R_cg = cg.R_cg[0]
         else:
-            cg = self.pdb_to_cg(self.pdb_fn, dcd_fn=self.dcd_fn, frame_index=index)
+            # cg = self.pdb_to_cg(self.pdb_fn, dcd_fn=self.dcd_fn, frame_index=index)
+            cg = self.cg
+            R_cg = cg.R_cg[index]
         #
-        r_cg = torch.as_tensor(cg.R_cg[0], dtype=self.dtype)
+        r_cg = torch.as_tensor(R_cg, dtype=self.dtype)
         #
         valid_residue = cg.atom_mask_cg[:, 0] > 0.0
         pos = r_cg[valid_residue, :]
@@ -371,10 +376,14 @@ def create_topology_from_data(
     top = mdtraj.Topology()
     #
     chain_prev = -1
+    seg_no = -1
+    n_atom = 0
+    atom_index = []
     for i_res in range(data.ndata["residue_type"].size(0)):
         chain_index = data.ndata["chain_index"][i_res]
         resNum = data.ndata["resSeq"][i_res].cpu().detach().item()
         resSeqIns = data.ndata["resSeqIns"][i_res].cpu().detach().item()
+        continuous = data.ndata["continuous"][i_res].cpu().detach().item()
         if resSeqIns == 0:
             resSeq = resNum
         else:
@@ -392,16 +401,30 @@ def create_topology_from_data(
         ref_res = residue_s[residue_name]
         top_residue = top.add_residue(residue_name_std, top_chain, resSeq)
         #
+        if continuous == 0.0:
+            seg_no += 1
+        top_residue.segment_id = f"P{seg_no:03d}"
+        #
         if write_native:
             mask = data.ndata["pdb_atom_mask"][i_res]
+            #
+            for i_atm, atom_name in enumerate(ref_res.atom_s):
+                if mask[i_atm] > 0.0:
+                    element = mdtraj.core.element.Element.getBySymbol(atom_name[0])
+                    top.add_atom(atom_name, element, top_residue)
         else:
             mask = data.ndata["output_atom_mask"][i_res]
-        #
-        for i_atm, atom_name in enumerate(ref_res.atom_s):
-            if mask[i_atm] > 0.0:
-                element = mdtraj.core.element.Element.getBySymbol(atom_name[0])
-                top.add_atom(atom_name, element, top_residue)
-    return top
+            #
+            for i_atm, atom_name in zip(
+                ref_res.output_atom_index, ref_res.output_atom_s
+            ):
+                # for i_atm, atom_name in enumerate(ref_res.atom_s):
+                if mask[i_atm] > 0.0:
+                    element = mdtraj.core.element.Element.getBySymbol(atom_name[0])
+                    top.add_atom(atom_name, element, top_residue)
+                    atom_index.append(n_atom + i_atm)
+            n_atom += top_residue.n_atoms
+    return top, atom_index
 
 
 def create_trajectory_from_batch(
@@ -419,7 +442,7 @@ def create_trajectory_from_batch(
     traj_s = []
     ssbond_s = []
     for idx, data in enumerate(dgl.unbatch(batch)):
-        top = create_topology_from_data(data, write_native=write_native)
+        top, atom_index = create_topology_from_data(data, write_native=write_native)
         #
         xyz = []
         if write_native:
@@ -440,7 +463,11 @@ def create_trajectory_from_batch(
             end = start + data.num_nodes()
             xyz.append(R[start:end][mask > 0.0])
             start = end
-        xyz = np.array(xyz)
+        #
+        if write_native:
+            xyz = np.array(xyz)
+        else:
+            xyz = np.array(xyz)[:, atom_index]
         #
         traj = mdtraj.Trajectory(xyz=xyz, topology=top)
         traj_s.append(traj)
@@ -469,12 +496,32 @@ def to_pt():
     train_loader = dgl.dataloading.GraphDataLoader(
         train_set, batch_size=8, shuffle=False, num_workers=16
     )
-    # for _ in tqdm.tqdm(train_loader, desc=use_pt):
-    #     pass
+    for _ in train_loader:
+        pass
 
 
 def test():
-    pass
+    base_dir = BASE / "pdb.6k"
+    pdblist = "set/targets.pdb.6k"
+    #
+    cg_model = libcg.Martini
+    topology_file = read_martini_topology()
+    #
+    augment = ""
+    use_pt = None  # "Martini"
+    #
+    train_set = PDBset(
+        base_dir,
+        pdblist,
+        cg_model,
+        topology_file=topology_file,
+        use_pt=use_pt,
+        augment=augment,
+    )
+    batch = train_set[0]
+    R = torch.zeros((batch.num_nodes(), 24, 3))
+    traj_s, ssbond_s = create_trajectory_from_batch(batch, R, write_native=True)
+    traj_s[0].save("test.pdb")
 
 
 if __name__ == "__main__":

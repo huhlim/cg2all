@@ -2,7 +2,6 @@
 
 import mdtraj
 import numpy as np
-
 from numpy_basics import torsion_angle, internal_to_cartesian
 from residue_constants import TER_PATCHes
 
@@ -60,6 +59,8 @@ def patch_TER(
             )
     #
     residue = top.add_residue(residue0.name, top.chain(-1), residue0.resSeq)
+    if residue0.segment_id != "":
+        residue.segment_id = residue0.segment_id
     for atom_name in out_atom_s:
         element = mdtraj.core.element.Element.getBySymbol(atom_name[0])
         top.add_atom(atom_name, element, residue)
@@ -85,6 +86,8 @@ def patch_termini(traj: mdtraj.Trajectory) -> mdtraj.Trajectory:
             xyz.append(xyz0[:, index])
             #
             residue = top.add_residue(residue0.name, chain, residue0.resSeq)
+            if residue0.segment_id != "":
+                residue.segment_id = residue0.segment_id
             for atom0 in residue0.atoms:
                 top.add_atom(atom0.name, atom0.element, residue)
         #

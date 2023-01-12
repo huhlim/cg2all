@@ -8,6 +8,34 @@ from collections import namedtuple
 from libconfig import DATA_HOME
 from residue_constants_base import *
 
+def get_rigid_group_by_torsion(ss, residue_name, tor_name, index=-1, sub_index=-1):
+    rigid_group = [[], []]  # atom_name, coord
+    for X in rigid_groups[ss][residue_name]:
+        if X[1] == tor_name:
+            if (index < 0 or X[2] == index) and (
+                sub_index < 0 or X[3] == sub_index
+            ):
+                t_ang = X[5]
+                rigid_group[0].append(X[0])
+                rigid_group[1].append(X[6])
+    rigid_group[1] = np.array(rigid_group[1]) / 10.0  # in nm
+    if len(rigid_group[0]) == 0:
+        raise ValueError(
+            "Cannot find rigid group for"
+            f" {residue_name} {tor_name} {index} {sub_index}\n"
+        )
+    return t_ang, rigid_group[0], rigid_group[1]
+
+def get_rigid_transform_by_torsion(ss, residue_name, tor_name, index, sub_index=-1):
+    rigid_transform = None
+    for X, Y, tR in rigid_group_transformations[ss][residue_name]:
+        if (X[0] == tor_name and X[1] == index) and (
+            sub_index < 0 or X[2] == sub_index
+        ):
+            rigid_transform = (np.array(tR[1]), np.array(tR[0]) / 10.0)
+            break
+    return Y, rigid_transform
+
 
 residue_constants_pkl_fn = DATA_HOME / "residue_constants.pkl"
 if residue_constants_pkl_fn.exists():
@@ -87,34 +115,6 @@ else:
                     rigid_groups[ss][residue_name],
                     rigid_group_transformations[ss][residue_name],
                 )
-
-    def get_rigid_group_by_torsion(ss, residue_name, tor_name, index=-1, sub_index=-1):
-        rigid_group = [[], []]  # atom_name, coord
-        for X in rigid_groups[ss][residue_name]:
-            if X[1] == tor_name:
-                if (index < 0 or X[2] == index) and (
-                    sub_index < 0 or X[3] == sub_index
-                ):
-                    t_ang = X[5]
-                    rigid_group[0].append(X[0])
-                    rigid_group[1].append(X[6])
-        rigid_group[1] = np.array(rigid_group[1]) / 10.0  # in nm
-        if len(rigid_group[0]) == 0:
-            raise ValueError(
-                "Cannot find rigid group for"
-                f" {residue_name} {tor_name} {index} {sub_index}\n"
-            )
-        return t_ang, rigid_group[0], rigid_group[1]
-
-    def get_rigid_transform_by_torsion(ss, residue_name, tor_name, index, sub_index=-1):
-        rigid_transform = None
-        for X, Y, tR in rigid_group_transformations[ss][residue_name]:
-            if (X[0] == tor_name and X[1] == index) and (
-                sub_index < 0 or X[2] == sub_index
-            ):
-                rigid_transform = (np.array(tR[1]), np.array(tR[0]) / 10.0)
-                break
-        return Y, rigid_transform
 
     rigid_transforms_tensor = np.zeros(
         (MAX_SS, MAX_RESIDUE_TYPE, MAX_RIGID, 4, 3), dtype=float

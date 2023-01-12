@@ -94,6 +94,8 @@ class Residue(object):
 
         self.atom_s = [atom for atom in BACKBONE_ATOM_s]
         self.atom_type_s = [None for atom in BACKBONE_ATOM_s]
+        self.output_atom_s = []
+        self.output_atom_index = []
         self.ic_s = [{}, {}, {}]  # bond, angle, torsion
         self.build_ic = []
 
@@ -127,6 +129,9 @@ class Residue(object):
         else:
             i = BACKBONE_ATOM_s.index(atom_name)
             self.atom_type_s[i] = atom_type
+        #
+        self.output_atom_s.append(atom_name)
+        self.output_atom_index.append(self.atom_s.index(atom_name))
 
     def append_bond(self, pair):
         if not (pair[0][0] == "+" or pair[1][0] == "+"):

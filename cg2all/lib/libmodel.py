@@ -546,6 +546,7 @@ def build_structure(
     bb: torch.Tensor,
     sc: Optional[torch.Tensor] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
+
     dtype = bb.dtype
     device = bb.device
     residue_type = batch.ndata["residue_type"]

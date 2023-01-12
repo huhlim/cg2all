@@ -6,7 +6,6 @@ import numpy as np
 import mdtraj
 from string import ascii_uppercase as CHAIN_IDs
 from string import ascii_uppercase as INSCODEs
-
 from numpy_basics import *
 from residue_constants import *
 
@@ -133,9 +132,8 @@ class PDB(object):
                     dist = np.linalg.norm(R[1] - R[0], axis=-1)
                     if np.any(dist > 1.0):
                         sys.stderr.write(
-                            "WARNING: invalid SSBOND distance between "
-                            f"{cys_s[0][0]} {cys_s[0][1]} and"
-                            f" {cys_s[1][0]} {cys_s[1][1]} "
+                            f"WARNING: invalid SSBOND distance between "
+                            f"{cys_s[0][0]} {cys_s[0][1]} and {cys_s[1][0]} {cys_s[1][1]} "
                             f"{np.max(dist).round(3)*10.0:6.2f} {self.pdb_name}\n"
                         )
                     else:
