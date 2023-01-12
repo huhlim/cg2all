@@ -10,7 +10,7 @@ import functools
 import dgl
 import torch
 
-import cg2all
+# import cg2all
 
 BASE = pathlib.Path(__file__).parents[1].resolve()
 LIB_HOME = str(BASE / "lib")
@@ -39,6 +39,7 @@ def convert_cg2all(
     in_dcd_fn=None,
     ckpt_fn=None,
     device=None,
+    n_proc=int(os.getenv("OMP_NUM_THREADS", 1)),
 ):
     # set device
     if device is None:
@@ -75,6 +76,13 @@ def convert_cg2all(
     input_s = PredictionData(
         in_pdb_fn, cg_model, dcd_fn=in_dcd_fn, radius=config.globals.radius
     )
+    if in_dcd_fn is not None:
+        unitcell_lengths = input_s.cg.unitcell_lengths
+        unitcell_angles = input_s.cg.unitcell_angles
+    if len(input_s) > 1 and n_proc > 1:
+        input_s = dgl.dataloading.GraphDataLoader(
+            input_s, batch_size=1, num_workers=n_proc, shuffle=False
+        )
 
     if in_dcd_fn is None:  # PDB file
         batch = input_s[0].to(device)
@@ -98,8 +106,14 @@ def convert_cg2all(
                 mask = batch.ndata["output_atom_mask"].cpu().detach().numpy()
                 xyz.append(R[mask > 0.0])
         #
-        top = create_topology_from_data(batch)
-        traj = mdtraj.Trajectory(xyz=np.array(xyz), topology=top)
+        top, atom_index = create_topology_from_data(batch)
+        xyz = np.array(xyz)[:, atom_index]
+        traj = mdtraj.Trajectory(
+            xyz=xyz,
+            topology=top,
+            unitcell_lengths=unitcell_lengths,
+            unitcell_angles=unitcell_angles,
+        )
         output = patch_termini(traj)
         output.save(out_fn)
 
