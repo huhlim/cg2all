@@ -31,7 +31,10 @@ pip install git+http://github.com/huhlim/cg2all
 ### convert_cg2all
 convert a coarse-grained protein structure to all-atom model
 ```bash
-usage: convert_cg2all [-h] -p IN_PDB_FN [-d IN_DCD_FN] -o OUT_FN [--cg {CalphaBasedModel,CA,ca,ResidueBasedModel,RES,res,Martini,martini}] [--ckpt CKPT_FN] [--time TIME_JSON] [--device DEVICE]
+usage: convert_cg2all [-h] -p IN_PDB_FN [-d IN_DCD_FN] -o OUT_FN
+                      [--cg {CalphaBasedModel,CA,ca,ResidueBasedModel,RES,res,Martini,martini}]
+                      [--ckpt CKPT_FN] [--time TIME_JSON] [--device DEVICE]
+                      [--proc N_PROC]
 
 options:
   -h, --help            show this help message and exit
@@ -42,6 +45,7 @@ options:
   --ckpt CKPT_FN
   --time TIME_JSON
   --device DEVICE
+  --proc N_PROC
 ```
 #### arguments
 * -p/--pdb: Input PDB file (**mandatory**).
@@ -55,6 +59,7 @@ options:
 * --time: Output JSON file for recording timing (optional).
 * --device: Specify a device to run the model (optional) You can choose "cpu" or "cuda", or the script will detect one automatically. </br>
   "**cpu**" is usually faster than "cuda" unless the input/output system is really big or you provided a DCD file with many frames because it takes a lot for loading a model ckpt file on a GPU.
+* --proc: Specify the number of threads for loading input data. It is only used for dealing with a DCD file. (optional, default=OMP_NUM_THREADS or 1)
 
 #### an example
 ```bash

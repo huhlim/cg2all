@@ -41,6 +41,9 @@ class PDB(object):
                     atom_indices=load_index,
                     stride=stride,
                 )
+            self.unitcell_lengths = traj.unitcell_lengths
+            self.unitcell_angles = traj.unitcell_angles
+        #
         self.process(traj, pdb_fn, is_all=is_all, **kwarg)
 
     def process(

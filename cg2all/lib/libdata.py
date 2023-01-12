@@ -286,9 +286,6 @@ class PredictionData(Dataset):
         else:
             self.cg = self.pdb_to_cg(self.pdb_fn, dcd_fn=self.dcd_fn)
             self.n_frame = self.cg.n_frame
-            # self.n_frame = mdtraj.load(
-            #     self.dcd_fn, top=self.pdb_fn, atom_indices=[0]
-            # ).n_frames
 
     def __len__(self):
         return self.n_frame
@@ -301,7 +298,6 @@ class PredictionData(Dataset):
             cg = self.pdb_to_cg(self.pdb_fn)
             R_cg = cg.R_cg[0]
         else:
-            # cg = self.pdb_to_cg(self.pdb_fn, dcd_fn=self.dcd_fn, frame_index=index)
             cg = self.cg
             R_cg = cg.R_cg[index]
         #

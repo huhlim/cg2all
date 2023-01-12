@@ -96,7 +96,12 @@ def patch_termini(traj: mdtraj.Trajectory) -> mdtraj.Trajectory:
         xyz.append(xyz_cter)
     #
     xyz = np.concatenate(xyz, axis=1)
-    out = mdtraj.Trajectory(xyz=xyz, topology=top)
+    out = mdtraj.Trajectory(
+        xyz=xyz,
+        topology=top,
+        unitcell_lengths=traj.unitcell_lengths,
+        unitcell_angles=traj.unitcell_angles,
+    )
     return out
 
 

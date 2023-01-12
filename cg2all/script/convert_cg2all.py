@@ -48,6 +48,9 @@ def main():
     arg.add_argument("--ckpt", dest="ckpt_fn", default=None)
     arg.add_argument("--time", dest="time_json", default=None)
     arg.add_argument("--device", dest="device", default=None)
+    arg.add_argument(
+        "--proc", dest="n_proc", default=int(os.getenv("OMP_NUM_THREADS", 1)), type=int
+    )
     arg = arg.parse_args()
     #
     timing = {}
@@ -96,6 +99,13 @@ def main():
     input_s = PredictionData(
         arg.in_pdb_fn, cg_model, dcd_fn=arg.in_dcd_fn, radius=config.globals.radius
     )
+    if arg.in_dcd_fn is not None:
+        unitcell_lengths = input_s.cg.unitcell_lengths
+        unitcell_angles = input_s.cg.unitcell_angles
+    if len(input_s) > 1 and arg.n_proc > 1:
+        input_s = dgl.dataloading.GraphDataLoader(
+            input_s, batch_size=1, num_workers=arg.n_proc, shuffle=False
+        )
     timing["loading_input"] = time.time() - timing["loading_input"]
     #
     if arg.in_dcd_fn is None:
@@ -132,8 +142,14 @@ def main():
             t0 = time.time()
         #
         timing["writing_output"] = time.time()
-        top = create_topology_from_data(batch)
-        traj = mdtraj.Trajectory(xyz=np.array(xyz), topology=top)
+        top, atom_index = create_topology_from_data(batch)
+        xyz = np.array(xyz)[:, atom_index]
+        traj = mdtraj.Trajectory(
+            xyz=xyz,
+            topology=top,
+            unitcell_lengths=unitcell_lengths,
+            unitcell_angles=unitcell_angles,
+        )
         output = patch_termini(traj)
         output.save(arg.out_fn)
         timing["writing_output"] = time.time() - timing["writing_output"]
