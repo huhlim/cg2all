@@ -6,6 +6,8 @@ import argparse
 import pathlib
 import functools
 
+os.environ["OPENMM_PLUGIN_DIR"] = "/dev/null"
+
 from cg2all.lib.libcg import ResidueBasedModel, CalphaBasedModel, Martini
 from cg2all.lib.libpdb import write_SSBOND
 from cg2all.lib.residue_constants import read_martini_topology

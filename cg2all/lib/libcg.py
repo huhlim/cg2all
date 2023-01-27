@@ -58,7 +58,6 @@ class ResidueBasedModel(PDB):
             i_res = residue.index
             if residue.name == "HIS":
                 residue_name = np.random.choice(["HSD", "HSE"], p=[0.5, 0.5])
-                # residue_name = "HSE"
                 residue.name = residue_name
             else:
                 residue_name = AMINO_ACID_ALT_s.get(residue.name, residue.name)
