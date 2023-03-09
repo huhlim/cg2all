@@ -20,9 +20,14 @@ class PDB(object):
 
         # read protein
         pdb = mdtraj.load(pdb_fn, standard_names=False)
+        #
+        if self.__class__.__name__ == "PRIMO" and (not is_all):
+            update_primo_names(pdb)
+        #
         load_index = pdb.top.select(
             "protein or (resname HSD or resname HSE or resname MSE)"
         )
+        #
         if dcd_fn is None:
             self.is_dcd = False
             traj = pdb.atom_slice(load_index)
@@ -47,7 +52,7 @@ class PDB(object):
         self.process(traj, pdb_fn, is_all=is_all, **kwarg)
 
     def process(
-        self, traj, pdb_fn, is_all=True, check_validity=True, compute_dssp=True
+        self, traj, pdb_fn, is_all=True, check_validity=True, compute_dssp=True, **kwarg
     ):
         self.traj = traj
         self.top = traj.top

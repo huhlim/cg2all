@@ -21,7 +21,7 @@ from libdata import (
     create_trajectory_from_batch,
     create_topology_from_data,
 )
-from residue_constants import read_martini_topology
+from residue_constants import read_coarse_grained_topology
 from libcg import ResidueBasedModel, CalphaBasedModel, Martini
 from libpdb import write_SSBOND
 from libter import patch_termini
@@ -126,7 +126,7 @@ def convert_all2cg(in_pdb_fn, out_fn, model_type="CalphaBasedModel", in_dcd_fn=N
     elif model_type in ["RES", "res", "ResidueBasedModel"]:
         cg_model = ResidueBasedModel
     elif model_type in ["Martini", "martini"]:
-        cg_model = functools.partial(Martini, martini_top=read_martini_topology())
+        cg_model = functools.partial(Martini, martini_top=read_coarse_grained_topology("martini"))
     else:
         raise KeyError(f"Unknown CG model, {model_type}\n")
     #

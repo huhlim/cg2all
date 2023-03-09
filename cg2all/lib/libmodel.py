@@ -61,6 +61,7 @@ CONFIG["train"]["lr_gamma"] = 0.995
 CONFIG["train"]["use_pt"] = "CA"
 CONFIG["train"]["augment"] = ""
 CONFIG["train"]["min_cg"] = ""
+CONFIG["train"]["perturb_pos"] = 0.0
 
 CONFIG["globals"] = ConfigDict()
 CONFIG["globals"]["radius"] = 1.0
@@ -184,6 +185,9 @@ def set_model_config(arg: dict, cg_model) -> ConfigDict:
         config.structure_module.fiber_edge.append((0, cg_model.n_edge_scalar))
     if cg_model.n_edge_vector > 0:
         config.structure_module.fiber_edge.append((1, cg_model.n_edge_vector))
+    #
+    if config.train.get("perturb_pos", 0.0) > 0.0:
+        config.train.use_pt = None
     #
     return config
 

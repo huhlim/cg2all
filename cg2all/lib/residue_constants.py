@@ -8,13 +8,12 @@ from collections import namedtuple
 from libconfig import DATA_HOME
 from residue_constants_base import *
 
+
 def get_rigid_group_by_torsion(ss, residue_name, tor_name, index=-1, sub_index=-1):
     rigid_group = [[], []]  # atom_name, coord
     for X in rigid_groups[ss][residue_name]:
         if X[1] == tor_name:
-            if (index < 0 or X[2] == index) and (
-                sub_index < 0 or X[3] == sub_index
-            ):
+            if (index < 0 or X[2] == index) and (sub_index < 0 or X[3] == sub_index):
                 t_ang = X[5]
                 rigid_group[0].append(X[0])
                 rigid_group[1].append(X[6])
@@ -25,6 +24,7 @@ def get_rigid_group_by_torsion(ss, residue_name, tor_name, index=-1, sub_index=-
             f" {residue_name} {tor_name} {index} {sub_index}\n"
         )
     return t_ang, rigid_group[0], rigid_group[1]
+
 
 def get_rigid_transform_by_torsion(ss, residue_name, tor_name, index, sub_index=-1):
     rigid_transform = None
@@ -249,12 +249,55 @@ def read_martini_topology():
         if resName not in top_s:
             continue
         #
-        top = top_s[resName]
-        for k, bead in enumerate(top):
+        for k, bead in enumerate(top_s[resName]):
             for atmName in bead:
                 i_atm = residue_s[resName].atom_s.index(atmName)
                 martini_map[i_res, i_atm] = k
     return martini_map
+
+
+def read_primo_topology():
+    top_s = {}
+    with open(DATA_HOME / "primo.top") as fp:
+        for line in fp:
+            if line.startswith("RESI"):
+                resName = line.strip().split()[1]
+                top_s[resName] = []
+            elif line.startswith("BEAD"):
+                atmName_s = line.strip().split()[2:]
+                top_s[resName].append(atmName_s)
+    #
+    primo_map = []
+    for i_res, resName in enumerate(AMINO_ACID_s):
+        if resName not in top_s:
+            primo_map.append(None)
+            continue
+        #
+        index_s = []
+        primo_map.append(index_s)
+        for k, bead in enumerate(top_s[resName]):
+            index = []
+            for atmName in bead:
+                i_atm = residue_s[resName].atom_s.index(atmName)
+                index.append(i_atm)
+            index_s.append(index)
+    return primo_map
+
+
+def update_primo_names(pdb):
+    for residue in pdb.top.residues:
+        if len(residue.name) == 4 and residue.name[-1] == "2":
+            residue.name = residue.name[:3]
+        for atom in residue.atoms:
+            if atom.name in ["N1", "CA1"]:
+                atom.name = atom.name[:-1]
+
+
+def read_coarse_grained_topology(model):
+    if model == "martini":
+        return read_martini_topology()
+    elif model == "primo":
+        return read_primo_topology()
 
 
 if not use_compiled:

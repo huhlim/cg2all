@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cg2all"
-version = "0.8"
+version = "0.9"
 description = "Convert coarse-grained protein structure to all-atom structure"
 authors = [
     "Lim Heo <huhlim@gmail.com>",

@@ -8,7 +8,7 @@ import functools
 
 os.environ["OPENMM_PLUGIN_DIR"] = "/dev/null"
 
-from cg2all.lib.libcg import ResidueBasedModel, CalphaBasedModel, Martini
+import cg2all.lib.libcg
 from cg2all.lib.libpdb import write_SSBOND
 from cg2all.lib.residue_constants import read_martini_topology
 
@@ -25,17 +25,34 @@ def main():
         # fmt:off
         choices=["CalphaBasedModel", "CA", "ca", \
                 "ResidueBasedModel", "RES", "res", \
-                "Martini", "martini"]
+                "Martini", "martini", \
+                "PRIMO", "primo", \
+                "CACM", "cacm", "CalphaCM", "CalphaCMModel",\
+                "BB", "bb", "backbone", "Backbone", "BackboneModel", \
+                "MC", "mc", "mainchain", "Mainchain", "MainchainModel",
+                ]
         # fmt:on
     )
     arg = arg.parse_args()
     #
     if arg.cg_model in ["CA", "ca", "CalphaBasedModel"]:
-        cg_model = CalphaBasedModel
+        cg_model = cg2all.lib.libcg.CalphaBasedModel
     elif arg.cg_model in ["RES", "res", "ResidueBasedModel"]:
-        cg_model = ResidueBasedModel
+        cg_model = cg2all.lib.libcg.ResidueBasedModel
     elif arg.cg_model in ["Martini", "martini"]:
-        cg_model = functools.partial(Martini, martini_top=read_martini_topology())
+        cg_model = functools.partial(
+            cg2all.lib.libcg.Martini, topology_map=read_coarse_grained_topology("martini")
+        )
+    elif arg.cg_model in ["PRIMO", "primo"]:
+        cg_model = functools.partial(
+            cg2all.lib.libcg.PRIMO, topology_map=read_coarse_grained_topology("primo")
+        )
+    elif arg.cg_model in ["CACM", "cacm", "CalphaCM", "CalphaCMModel"]:
+        cg_model = cg2all.lib.libcg.CalphaCMModel
+    elif arg.cg_model in ["BB", "bb", "backbone", "Backbone", "BackboneModel"]:
+        cg_model = cg2all.lib.libcg.BackboneModel
+    elif arg.cg_model in ["MC", "mc", "mainchain", "Mainchain", "MainchainModel"]:
+        cg_model = cg2all.lib.libcg.MainchainModel
     else:
         raise KeyError(f"Unknown CG model, {arg.cg_model}\n")
     #

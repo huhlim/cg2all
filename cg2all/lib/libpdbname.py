@@ -158,17 +158,17 @@ def update_by_closest_method(R, bfac, atom_mask, i_res, ref_res, tor, amb, opr_d
     # get rigid-body transformation
     if tor.name == "XI":
         prev, rigid_tR = get_rigid_transform_by_torsion(
-            ref_res.residue_name, tor.name, tor.index, tor.sub_index
+            "", ref_res.residue_name, tor.name, tor.index, tor.sub_index
         )
         t_ang0, atom_s, rigid = get_rigid_group_by_torsion(
-            ref_res.residue_name, tor.name, tor.index, tor.sub_index
+            "", ref_res.residue_name, tor.name, tor.index, tor.sub_index
         )
     else:
         prev, rigid_tR = get_rigid_transform_by_torsion(
-            ref_res.residue_name, tor.name, tor.index
+            "", ref_res.residue_name, tor.name, tor.index
         )
         t_ang0, atom_s, rigid = get_rigid_group_by_torsion(
-            ref_res.residue_name, tor.name, tor.index
+            "", ref_res.residue_name, tor.name, tor.index
         )
     #
     # calculate the torsion angle
@@ -216,10 +216,10 @@ def update_by_closest_method(R, bfac, atom_mask, i_res, ref_res, tor, amb, opr_d
 def update_by_permute_method(R, bfac, atom_mask, i_res, ref_res, tor, amb, opr_dict):
     # get rigid-body transformation
     prev, rigid_tR = get_rigid_transform_by_torsion(
-        ref_res.residue_name, tor.name, tor.index
+        "", ref_res.residue_name, tor.name, tor.index
     )
     t_ang0, atom_s, rigid = get_rigid_group_by_torsion(
-        ref_res.residue_name, tor.name, tor.index
+        "", ref_res.residue_name, tor.name, tor.index
     )
     #
     index_amb0 = [ref_res.atom_s.index(atom) for atom in amb.atom_s]
@@ -273,17 +273,17 @@ def update_by_periodic_method(R, bfac, atom_mask, i_res, ref_res, tor, amb, opr_
     # get rigid-body transformation
     if tor.name == "XI":
         prev, rigid_tR = get_rigid_transform_by_torsion(
-            ref_res.residue_name, tor.name, tor.index, tor.sub_index
+            "", ref_res.residue_name, tor.name, tor.index, tor.sub_index
         )
         t_ang0, atom_s, rigid = get_rigid_group_by_torsion(
-            ref_res.residue_name, tor.name, tor.index, tor.sub_index
+            "", ref_res.residue_name, tor.name, tor.index, tor.sub_index
         )
     else:
         prev, rigid_tR = get_rigid_transform_by_torsion(
-            ref_res.residue_name, tor.name, tor.index
+            "", ref_res.residue_name, tor.name, tor.index
         )
         t_ang0, atom_s, rigid = get_rigid_group_by_torsion(
-            ref_res.residue_name, tor.name, tor.index
+            "", ref_res.residue_name, tor.name, tor.index
         )
     #
     # find
