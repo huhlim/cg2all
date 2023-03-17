@@ -66,7 +66,7 @@ def main():
         # fmt:on
     )
     arg.add_argument(
-        "--chain-break-cutoff", dest="chain_break_cutoff", default=1.0, type=float
+        "--chain-break-cutoff", dest="chain_break_cutoff", default=10.0, type=float
     )
     arg.add_argument(
         "-a", "--all", "--is_all", dest="is_all", default=False, action="store_true"
