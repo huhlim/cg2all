@@ -46,7 +46,7 @@ class BaseClass(PDB):
         if is_all:
             self.convert_to_cg(**kwarg)
         else:
-            self.chain_break_cutoff = kwarg.get("chain_break_cutoff", 0.5)
+            self.chain_break_cutoff = kwarg.get("chain_break_cutoff", 1.0)
             self.read_cg()
             self.get_continuity_cg()
 
@@ -517,5 +517,3 @@ def get_backbone_angles(R):
     #
     out = torch.cat([torch.cos(tor_s), torch.sin(tor_s)], dim=-1).view(-1, 12)
     return out
-
-

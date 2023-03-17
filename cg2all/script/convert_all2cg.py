@@ -10,7 +10,7 @@ os.environ["OPENMM_PLUGIN_DIR"] = "/dev/null"
 
 import cg2all.lib.libcg
 from cg2all.lib.libpdb import write_SSBOND
-from cg2all.lib.residue_constants import read_martini_topology
+from cg2all.lib.residue_constants import read_coarse_grained_topology
 
 
 def main():

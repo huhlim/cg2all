@@ -285,6 +285,7 @@ class PredictionData(Dataset):
         dcd_fn=None,
         radius=1.0,
         self_loop=False,
+        chain_break_cutoff=1.0,
         is_all=False,
         dtype=DTYPE,
     ):
@@ -299,6 +300,7 @@ class PredictionData(Dataset):
         self.radius = radius
         self.self_loop = self_loop
         self.dtype = dtype
+        self.chain_break_cutoff=chain_break_cutoff
         self.is_all = is_all
         #
         if self.dcd_fn is None:
@@ -312,9 +314,12 @@ class PredictionData(Dataset):
 
     def pdb_to_cg(self, *arg, **argv):
         if self.topology_map is None:
-            return self.cg_model(is_all=self.is_all, *arg, **argv)
+            return self.cg_model(chain_break_cutoff=self.chain_break_cutoff,is_all=self.is_all, *arg, **argv)
         else:
-            return self.cg_model(is_all=self.is_all, *arg, **argv, topology_map=self.topology_map)
+            return self.cg_model(
+                    chain_break_cutoff=self.chain_break_cutoff,
+                is_all=self.is_all, *arg, **argv, topology_map=self.topology_map
+            )
 
     def __getitem__(self, index):
         if self.dcd_fn is None:

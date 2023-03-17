@@ -319,10 +319,10 @@ def loss_f_bonded_energy_aux(batch: dgl.DGLGraph, R: torch.Tensor):
             torch.abs(d_pro - BOND_LENGTH_PROLINE_RING)
         ) / R.size(0)
     else:
-        bond_energy_pro = 0.0
+        bond_energy_pro = torch.zeros(1, dtype=DTYPE, device=R.device)
 
     # disulfide bond
-    bond_energy_ssbond = 0.0
+    bond_energy_ssbond = torch.zeros(1, dtype=DTYPE, device=R.device)
     for batch_index in range(batch.batch_size):
         data = dgl.slice_batch(batch, batch_index, store_ids=True)
         if not torch.any(data.ndata["ssbond_index"] >= 0):

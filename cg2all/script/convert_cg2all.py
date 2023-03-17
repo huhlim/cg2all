@@ -22,6 +22,7 @@ from cg2all.lib.libdata import (
     create_trajectory_from_batch,
     create_topology_from_data,
 )
+from cg2all.lib.residue_constants import read_coarse_grained_topology
 import cg2all.lib.libcg
 from cg2all.lib.libpdb import write_SSBOND
 from cg2all.lib.libter import patch_termini
@@ -30,6 +31,17 @@ import cg2all.lib.libmodel
 import warnings
 
 warnings.filterwarnings("ignore")
+
+
+def download_ckpt_file(model_type, ckpt_fn):
+    import requests
+    sys.stdout.write(f"Downloading ... {ckpt_fn}\n")
+    url = f"https://zenodo.org/record/7742950/files/{ckpt_fn.name}"
+    if not ckpt_fn.parent.exists():
+        ckpt_fn.parent.mkdir()
+    with open(ckpt_fn, "wb") as fout:
+        fout.write(requests.get(url).content)
+
 
 
 def main():
@@ -52,6 +64,9 @@ def main():
                 "CACM", "cacm", "CalphaCM", "CalphaCMModel",
                 ]
         # fmt:on
+    )
+    arg.add_argument(
+        "--chain-break-cutoff", dest="chain_break_cutoff", default=1.0, type=float
     )
     arg.add_argument(
         "-a", "--all", "--is_all", dest="is_all", default=False, action="store_true"
@@ -94,6 +109,10 @@ def main():
                 model_type = "MainchainModel"
             # fmt:on
             arg.ckpt_fn = MODEL_HOME / f"{model_type}.ckpt"
+        #
+        if not arg.ckpt_fn.exists():
+            download_ckpt_file(model_type, arg.ckpt_fn)
+    #
     ckpt = torch.load(arg.ckpt_fn, map_location=device)
     config = ckpt["hyper_parameters"]
     timing["loading_ckpt"] = time.time() - timing["loading_ckpt"]
@@ -138,6 +157,7 @@ def main():
         topology_map=topology_map,
         dcd_fn=arg.in_dcd_fn,
         radius=config.globals.radius,
+        chain_break_cutoff=0.1 * arg.chain_break_cutoff,
         is_all=arg.is_all,
     )
     if arg.in_dcd_fn is not None:
