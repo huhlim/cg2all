@@ -224,7 +224,7 @@ class ResidueBasedModel(BaseClass):
     def __init__(self, pdb_fn, dcd_fn=None, **kwarg):
         super().__init__(pdb_fn, dcd_fn, **kwarg)
 
-    def convert_to_cg(self):
+    def convert_to_cg(self, **kwarg):
         self.top_cg = self.top.subset(self.top.select("name CA"))
         #
         mass_weighted_R = self.R * self.atomic_mass[None, ..., None]
@@ -241,9 +241,8 @@ class CalphaBasedModel(BaseClass):
     def __init__(self, pdb_fn, dcd_fn=None, **kwarg):
         super().__init__(pdb_fn, dcd_fn, **kwarg)
 
-    def convert_to_cg(self):
+    def convert_to_cg(self, **kwarg):
         self.top_cg = self.top.subset(self.top.select("name CA"))
-        self.bead_index = self.residue_index[:, None]  # deprecated
         #
         self.R_cg = self.R[:, :, (ATOM_INDEX_CA,), :]
         self.atom_mask_cg = self.atom_mask_pdb[:, (ATOM_INDEX_CA,)]
@@ -281,7 +280,7 @@ class CalphaCMModel(BaseClass):
                     atom_s.append(atom)
         return top
 
-    def convert_to_cg(self):
+    def convert_to_cg(self, **kwarg):
         self.top_cg = self.create_top_cg()
         #
         self.R_cg = np.zeros((self.n_frame, self.n_residue, self.MAX_BEAD, 3))
@@ -448,7 +447,7 @@ class BackboneModel(BaseClass):
                     atom = top.add_atom(atom_name, element, residue, serial=serial)
         return top
 
-    def convert_to_cg(self):
+    def convert_to_cg(self, **kwarg):
         self.top_cg = self.create_top_cg()
         #
         atom_index = (ATOM_INDEX_CA, ATOM_INDEX_N, ATOM_INDEX_C)
@@ -483,7 +482,7 @@ class MainchainModel(BackboneModel):
     def __init__(self, pdb_fn, dcd_fn=None, is_all=True, **kwarg):
         super().__init__(pdb_fn, dcd_fn, is_all=is_all, **kwarg)
 
-    def convert_to_cg(self):
+    def convert_to_cg(self, **kwarg):
         self.top_cg = self.create_top_cg()
         #
         atom_index = (ATOM_INDEX_CA, ATOM_INDEX_N, ATOM_INDEX_C, ATOM_INDEX_O)
