@@ -22,7 +22,7 @@ from libdata import (
     create_topology_from_data,
 )
 from residue_constants import read_coarse_grained_topology
-from libcg import ResidueBasedModel, CalphaBasedModel, Martini
+import libcg
 from libpdb import write_SSBOND
 from libter import patch_termini
 import libmodel
@@ -50,16 +50,27 @@ def convert_cg2all(
     # load model ckpt file
     if ckpt_fn is None:
         ckpt_fn = MODEL_HOME / f"{model_type}.ckpt"
+        if not ckpt_fn.exists():
+            libmodel.download_ckpt_file(model_type, ckpt_fn)
+    #
     ckpt = torch.load(ckpt_fn, map_location=device)
     config = ckpt["hyper_parameters"]
 
     # configure model
     if config["cg_model"] == "CalphaBasedModel":
-        cg_model = CalphaBasedModel
+        cg_model = libcg.CalphaBasedModel
     elif config["cg_model"] == "ResidueBasedModel":
-        cg_model = ResidueBasedModel
+        cg_model = libcg.ResidueBasedModel
     elif config["cg_model"] == "Martini":
-        cg_model = Martini
+        cg_model = libcg.Martini
+    elif config["cg_model"] == "PRIMO":
+        cg_model = libcg.PRIMO
+    elif config["cg_model"] == "CalphaCMModel":
+        cg_model = libcg.CalphaCMModel
+    elif config["cg_model"] == "BackboneModel":
+        cg_model = libcg.BackboneModel
+    elif config["cg_model"] == "MainchainModel":
+        cg_model = libcg.MainchainModel
     config = libmodel.set_model_config(config, cg_model)
     model = libmodel.Model(config, cg_model, compute_loss=False)
 
@@ -122,11 +133,21 @@ def convert_cg2all(
 
 def convert_all2cg(in_pdb_fn, out_fn, model_type="CalphaBasedModel", in_dcd_fn=None):
     if model_type in ["CA", "ca", "CalphaBasedModel"]:
-        cg_model = CalphaBasedModel
+        cg_model = libcg.CalphaBasedModel
     elif model_type in ["RES", "res", "ResidueBasedModel"]:
-        cg_model = ResidueBasedModel
+        cg_model = libcg.ResidueBasedModel
     elif model_type in ["Martini", "martini"]:
-        cg_model = functools.partial(Martini, martini_top=read_coarse_grained_topology("martini"))
+        cg_model = functools.partial(libcg.Martini, martini_top=read_coarse_grained_topology("martini"))
+    elif model_type in ["PRIMO", "primo"]:
+        cg_model = functools.partial(
+            libcg.PRIMO, topology_map=read_coarse_grained_topology("primo")
+        )
+    elif model_type in ["CACM", "cacm", "CalphaCM", "CalphaCMModel"]:
+        cg_model = libcg.CalphaCMModel
+    elif model_type in ["BB", "bb", "backbone", "Backbone", "BackboneModel"]:
+        cg_model = libcg.BackboneModel
+    elif model_type in ["MC", "mc", "mainchain", "Mainchain", "MainchainModel"]:
+        cg_model = libcg.MainchainModel
     else:
         raise KeyError(f"Unknown CG model, {model_type}\n")
     #

@@ -587,3 +587,13 @@ def build_structure(
     opr = torch.take_along_dim(opr, rigids_dep[..., None, None], axis=1)
     R = rotate_vector(opr[:, :, :3], rigids) + opr[:, :, 3]
     return R, opr[:, 0]
+
+
+def download_ckpt_file(model_type, ckpt_fn):
+    import requests
+    sys.stdout.write(f"Downloading ... {ckpt_fn}\n")
+    url = f"https://zenodo.org/record/7742950/files/{ckpt_fn.name}"
+    if not ckpt_fn.parent.exists():
+        ckpt_fn.parent.mkdir()
+    with open(ckpt_fn, "wb") as fout:
+        fout.write(requests.get(url).content)

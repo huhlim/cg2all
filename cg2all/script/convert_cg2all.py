@@ -33,17 +33,6 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def download_ckpt_file(model_type, ckpt_fn):
-    import requests
-    sys.stdout.write(f"Downloading ... {ckpt_fn}\n")
-    url = f"https://zenodo.org/record/7742950/files/{ckpt_fn.name}"
-    if not ckpt_fn.parent.exists():
-        ckpt_fn.parent.mkdir()
-    with open(ckpt_fn, "wb") as fout:
-        fout.write(requests.get(url).content)
-
-
-
 def main():
     arg = argparse.ArgumentParser(prog="convert_cg2all")
     arg.add_argument("-p", "--pdb", dest="in_pdb_fn", required=True)
@@ -111,7 +100,7 @@ def main():
             arg.ckpt_fn = MODEL_HOME / f"{model_type}.ckpt"
         #
         if not arg.ckpt_fn.exists():
-            download_ckpt_file(model_type, arg.ckpt_fn)
+            cg2all.lib.libmodel.download_ckpt_file(model_type, arg.ckpt_fn)
     #
     ckpt = torch.load(arg.ckpt_fn, map_location=device)
     config = ckpt["hyper_parameters"]
