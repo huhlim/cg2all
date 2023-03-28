@@ -28,6 +28,7 @@ from torch_basics import (
     acos_safe,
     torsion_angle,
 )
+from libdata import resSeq_to_number
 
 from libloss import loss_f_bonded_energy_aux as loss_f_bonded_energy_aa_aux
 
@@ -320,82 +321,85 @@ class CryoEMLossFunction(object):
         return loss_sum, loss
 
 
-class CryoEM_openmm_energy(openmm.openmm.CustomCompoundBondForce):
-    def __init__(self, mrc_fn, psf, density_threshold):
-        super().__init__(1, "")
-        self.read_mrc_file(mrc_fn)
-        self.rho_thr = density_threshold
-        self.set_energy_function(psf)
-
-    def read_mrc_file(self, mrc_fn):
-        with mrcfile.open(mrc_fn) as mrc:
-            header = mrc.header
-            self.header = header
-            #
-            data = mrc.data
-            #
-            axis_order = (3 - header.maps, 3 - header.mapr, 3 - header.mapc)
-            data = np.moveaxis(data, source=(0, 1, 2), destination=axis_order)
-
-            apix = np.array([mrc.voxel_size.x, mrc.voxel_size.y, mrc.voxel_size.z])
-            xyz_origin = np.array([header.origin.x, header.origin.y, header.origin.z])
-            if np.all(xyz_origin == 0.0):
-                xyz_origin = np.array(
-                    [header.nxstart, header.nystart, header.nzstart], dtype=float
-                )
-                xyz_origin *= apix
-            xyz_size = np.array([header.mx, header.my, header.mz], dtype=int)
+class MinimizableData(object):
+    def __init__(self, pdb_fn, cg_model, is_all=False, radius=1.0, dtype=DTYPE):
+        super().__init__()
         #
-        self.apix = apix * 0.1
-        self.xyz_origin = xyz_origin * 0.1
-        self.xyz_size = xyz_size
-        self.boxsize = (self.xyz_size - 1) * self.apix
-        self.rho = np.swapaxes(data, 0, -1)
-        self.rho_max = self.rho.max()
+        self.pdb_fn = pdb_fn
+        #
+        self.radius = radius
+        self.dtype = dtype
+        #
+        self.cg = cg_model(self.pdb_fn, is_all=is_all)
+        #
+        self.r_cg = torch.as_tensor(self.cg.R_cg[0], dtype=self.dtype)
+        self.r_cg.requires_grad = True
 
-    def set_energy_function(self, psf):
-        rho = openmm.openmm.Continuous3DFunction(
-            *self.xyz_size,
-            self.rho.flatten(),
-            0.0,
-            self.boxsize[0],
-            0.0,
-            self.boxsize[1],
-            0.0,
-            self.boxsize[2],
+    def convert_to_batch(self, r_cg):
+        valid_residue = self.cg.atom_mask_cg[:, 0] > 0.0
+        pos = r_cg[valid_residue, :]
+        geom_s = self.cg.get_geometry(pos, self.cg.atom_mask_cg, self.cg.continuous[0])
+        #
+        node_feat = self.cg.geom_to_feature(
+            geom_s, self.cg.continuous, dtype=self.dtype
         )
+        data = dgl.radius_graph(pos[:, 0], self.radius, self_loop=False)
+        data.ndata["pos"] = pos[:, 0]
+        data.ndata["node_feat_0"] = node_feat["0"][..., None]  # shape=(N, 16, 1)
+        data.ndata["node_feat_1"] = node_feat["1"]  # shape=(N, 4, 3)
         #
-        form = "weight * (1 - (density(x1,y1,z1) - d_thr) / (d_max - d_thr)) ; dt=density(x1,y1,z1)"
-        self.setEnergyFunction(form)
-        self.addTabulatedFunction("density", rho)
-        self.addGlobalParameter("d_max", self.rho_max)
-        self.addGlobalParameter("d_thr", self.rho_thr)
-        self.addPerBondParameter("weight")
+        edge_src, edge_dst = data.edges()
+        data.edata["rel_pos"] = pos[edge_dst, 0] - pos[edge_src, 0]
         #
-        for i, atom in enumerate(psf.topology.atoms()):
-            self.addBond(
-                [i], [10.0 * atom.element.mass.value_in_unit(openmm.unit.dalton)]
-            )
+        data.ndata["chain_index"] = torch.as_tensor(
+            self.cg.chain_index, dtype=torch.long
+        )
+        resSeq, resSeqIns = resSeq_to_number(self.cg.resSeq)
+        data.ndata["resSeq"] = torch.as_tensor(resSeq, dtype=torch.long)
+        data.ndata["resSeqIns"] = torch.as_tensor(resSeqIns, dtype=torch.long)
+        data.ndata["residue_type"] = torch.as_tensor(
+            self.cg.residue_index, dtype=torch.long
+        )
+        data.ndata["continuous"] = torch.as_tensor(
+            self.cg.continuous[0], dtype=self.dtype
+        )
+        data.ndata["output_atom_mask"] = torch.as_tensor(
+            self.cg.atom_mask, dtype=self.dtype
+        )  #
+        ssbond_index = torch.full((data.num_nodes(),), -1, dtype=torch.long)
+        for cys_i, cys_j in self.cg.ssbond_s:
+            if cys_i < cys_j:  # because of loss_f_atomic_clash
+                ssbond_index[cys_j] = cys_i
+            else:
+                ssbond_index[cys_i] = cys_j
+        data.ndata["ssbond_index"] = ssbond_index
+        #
+        edge_feat = torch.zeros(
+            (data.num_edges(), 3), dtype=self.dtype
+        )  # bonded / ssbond / space
+        #
+        # bonded
+        pair_s = [(i - 1, i) for i, cont in enumerate(self.cg.continuous[0]) if cont]
+        pair_s = torch.as_tensor(pair_s, dtype=torch.long)
+        has_edges = data.has_edges_between(pair_s[:, 0], pair_s[:, 1])
+        pair_s = pair_s[has_edges]
+        eid = data.edge_ids(pair_s[:, 0], pair_s[:, 1])
+        edge_feat[eid, 0] = 1.0
+        eid = data.edge_ids(pair_s[:, 1], pair_s[:, 0])
+        edge_feat[eid, 0] = 1.0
+        #
+        # ssbond
+        if len(self.cg.ssbond_s) > 0:
+            pair_s = torch.as_tensor(self.cg.ssbond_s, dtype=torch.long)
+            has_edges = data.has_edges_between(pair_s[:, 0], pair_s[:, 1])
+            pair_s = pair_s[has_edges]
+            eid = data.edge_ids(pair_s[:, 0], pair_s[:, 1])
+            edge_feat[eid, 1] = 1.0
+            eid = data.edge_ids(pair_s[:, 1], pair_s[:, 0])
+            edge_feat[eid, 1] = 1.0
+        #
+        # space
+        edge_feat[edge_feat.sum(dim=-1) == 0.0, 2] = 1.0
+        data.edata["edge_feat_0"] = edge_feat[..., None]
 
-
-def construct_distance_restraints(psf, crd, force_const):
-    force_const = (
-        force_const * openmm.unit.kilojoules_per_mole / openmm.unit.nanometer**2
-    )
-    bond = openmm.openmm.CustomBondForce("k * (r-r0)^2")
-    bond.addGlobalParameter("k", force_const)
-    bond.addPerBondParameter("r0")
-    #
-    calphaIndex = [atom.index for atom in psf.topology.atoms() if atom.name == "CA"]
-    xyz = crd.positions.value_in_unit(openmm.unit.nanometer)
-    xyz = np.array(xyz)[calphaIndex]
-    #
-    dr = xyz[None, :] - xyz[:, None]
-    d0 = np.sqrt(np.sum(dr**2, -1))
-    pair = np.where(d0 < 1.0)
-    #
-    for i, j in zip(*pair):
-        if i >= j:
-            continue
-        bond.addBond(calphaIndex[i], calphaIndex[j], [d0[i, j] * openmm.unit.nanometer])
-    return bond
+        return data

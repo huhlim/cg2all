@@ -15,13 +15,13 @@ os.environ["OPENMM_PLUGIN_DIR"] = "/dev/null"
 import mdtraj
 
 from cg2all.lib.libconfig import MODEL_HOME, DTYPE
-from cg2all.lib.libdata import MinimizableData, create_topology_from_data
+from cg2all.lib.libdata import create_topology_from_data
 import cg2all.lib.libcg
 from cg2all.lib.libpdb import write_SSBOND
 from cg2all.lib.libter import patch_termini
 import cg2all.lib.libmodel
 from cg2all.lib.torch_basics import v_norm_safe, inner_product, rotate_vector
-from cg2all.lib.libcryoem import CryoEMLossFunction
+from cg2all.lib.libcryoem import CryoEMLossFunction, MinimizableData
 
 import warnings
 
