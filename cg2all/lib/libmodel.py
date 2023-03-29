@@ -607,7 +607,7 @@ def download_ckpt_file(model_type, ckpt_fn):
         url = url_s[model_type]
         if not ckpt_fn.parent.exists():
             ckpt_fn.parent.mkdir()
-        gdown.download(url, str(ckpt_fn), quiet=True)
+        gdown.download(id=url, output=str(ckpt_fn), quiet=True)
     except:
         import requests
 
