@@ -594,7 +594,7 @@ def download_ckpt_file(model_type, ckpt_fn):
         import gdown
 
         #
-        sys.stdout.write(f"Downloading ... {ckpt_fn}\n")
+        sys.stdout.write(f"Downloading from Google Drive ... {ckpt_fn}\n")
         url_s = {
             "CalphaBasedModel": "1uzsVPB_0t0RDp2P8qJ44LzE3JiVowtTx",
             "ResidueBasedModel": "1KsxfB0B90YQQd1iBzw3buznHIwzN_0sA",
@@ -612,7 +612,7 @@ def download_ckpt_file(model_type, ckpt_fn):
         import requests
 
         #
-        sys.stdout.write(f"Downloading ... {ckpt_fn}\n")
+        sys.stdout.write(f"Downloading from Zenodo ... {ckpt_fn}\n")
         url = f"https://zenodo.org/record/7742950/files/{ckpt_fn.name}"
         if not ckpt_fn.parent.exists():
             ckpt_fn.parent.mkdir()
