@@ -17,14 +17,25 @@ pip install git+http://github.com/huhlim/cg2all
 ```
 #### for CUDA (GPU) usage
 1. Install [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
-2. Create an environment with CUDA support and activate it
+2. Create an environment with [DGL](https://www.dgl.ai/pages/start.html) library with CUDA support
 ```bash
-conda create --name cg2all pip cudatoolkit=11.3 dgl-cuda11.3 -c dglteam
+# This is an example with cudatoolkit=11.3.
+# Set a proper cudatoolkit version that is compatible with your CUDA drivier and DGL library.
+conda create --name cg2all pip cudatoolkit=11.3 dgl -c dglteam/label/cu113
+```
+3. Activate the environment
+```bash
 conda activate cg2all
 ```
-3. Install this package
+4. Install this package
 ```bash
 pip install git+http://github.com/huhlim/cg2all
+```
+
+#### for cryo_em_minimizer usage
+You need additional python package, `mrcfile` to deal with cryo-EM density map.
+```bash
+pip install mrcfile
 ```
 
 ## Usages
