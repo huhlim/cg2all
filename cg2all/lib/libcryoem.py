@@ -9,7 +9,7 @@ import mrcfile
 
 import mdtraj
 
-from libconfig import EPS, DTYPE, DATA_HOME
+from libconfig import DTYPE, DATA_HOME
 from residue_constants import (
     AMINO_ACID_s,
     MAX_RESIDUE_TYPE,
@@ -31,10 +31,6 @@ from torch_basics import (
 from libdata import resSeq_to_number
 
 from libloss import loss_f_bonded_energy_aux as loss_f_bonded_energy_aa_aux
-
-import openmm
-import openmm.unit
-
 
 SYSTEM_SIZE_DEPENDENT = True
 
