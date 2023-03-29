@@ -17,7 +17,7 @@ convert_cg2all = "cg2all.script.convert_cg2all:main"
 [tool.poetry.dependencies]
 python = "^3.8"
 torch = "^1.11"
-dgl = "^0.9"
+dgl = ">=0.9"
 e3nn = "^0.5"
 ml-collections = "^0.1.1"
 numpy = "^1.21"

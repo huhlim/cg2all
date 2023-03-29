@@ -306,32 +306,38 @@ files = [
 
 [[package]]
 name = "dgl"
-version = "0.9.1"
+version = "1.0.1"
 description = "Deep Graph Library"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "dgl-0.9.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:7b9848c2c643d7b4d4c1969d05e511aff776b101c69573defd3382107b25a5c9"},
-    {file = "dgl-0.9.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:973d30b8d7aba76ad0fdc49c12f5c9359f0913be73708f9e1b6a71e40b181252"},
-    {file = "dgl-0.9.1-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:1c4c0d3f3003cdda5b3ceffafb6246a821ee7ccbd4941dfef7826e99119218bb"},
-    {file = "dgl-0.9.1-cp310-cp310-win_amd64.whl", hash = "sha256:e51b9050eb4237b2c72e3e6f78511e65e4532dfc35fb70825ad42df1aee1ad8f"},
-    {file = "dgl-0.9.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:76635838f09bef50684763d5ed81075f92e547d4c984c1cf840be16a86b5a409"},
-    {file = "dgl-0.9.1-cp36-cp36m-macosx_11_0_arm64.whl", hash = "sha256:af42754a5ac2437e5b36a9aa04403f622b846f48a4ae4e4763f09c6b00fd00fb"},
-    {file = "dgl-0.9.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:2b63fb0eb224c65113ef26cc68ef206565106b9aee6e221c7e6bfcc1cdacc5c9"},
-    {file = "dgl-0.9.1-cp36-cp36m-win_amd64.whl", hash = "sha256:b245d988954db65c002a77da3ad80f97b13cc3c1a9027799c7d239d8e7e4dbd8"},
-    {file = "dgl-0.9.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:e3ddfdbd0eca8401be2fc2ea18bef4d1c5bf9c844a67afacf54720d3a5d574da"},
-    {file = "dgl-0.9.1-cp37-cp37m-macosx_11_0_arm64.whl", hash = "sha256:14acd668646cb214f6409da09874b4237d62deef3d48a0b1a02eeefd4f84cd17"},
-    {file = "dgl-0.9.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:9d7b740db8f0b84a7d98c3557e60fb05965fe1c4ec7f91c606aa99e21f835b03"},
-    {file = "dgl-0.9.1-cp37-cp37m-win_amd64.whl", hash = "sha256:b09bd5e301b5483f9f4684fb19cfacc6d10333d54c28f345ffca3ce86afa66e1"},
-    {file = "dgl-0.9.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:71282ec77d99d2de439fcdbf3529a636b6ca80134b7ccd6926e7b5ec433d7cfe"},
-    {file = "dgl-0.9.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:10b940df11175001f0df016e004333c746b15bb22842cf1de863d20ec5b8740c"},
-    {file = "dgl-0.9.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:4be35f9942b700603d730a770ab5b24a8ed11ad6c992051dc917ccf02fae70c1"},
-    {file = "dgl-0.9.1-cp38-cp38-win_amd64.whl", hash = "sha256:9fb788b4ba2df07b19a4982700e75a143c611847a52c3c5fd670a46d33f26061"},
-    {file = "dgl-0.9.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:8c1efe436309ff7932aea1ecc2439baf8d82f478443a6a6d6e7372ab44315613"},
-    {file = "dgl-0.9.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:fecbd81a2fe1a15f3d2eb0952343ea33a406c9d3b24741e9d86cb0a5ce6946c0"},
-    {file = "dgl-0.9.1-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:242a7cf52335fa91de35b80f5c1671b0f5aede10490cf9812bb4375aa1937620"},
-    {file = "dgl-0.9.1-cp39-cp39-win_amd64.whl", hash = "sha256:e4481112f528e8d2b74e20dee2b26d0ac67de3c1872814f595a865b5ad92a241"},
+    {file = "dgl-1.0.1-cp310-cp310-macosx_10_10_x86_64.whl", hash = "sha256:2ad8894ddd91ab4411fe01d4156543b9b04b89ce6d08e7d9df0ed6dcd084db2d"},
+    {file = "dgl-1.0.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:761c0388d0c7b0311042b4669d360ef1f8390661cfeba7525d24c7927f1a11c1"},
+    {file = "dgl-1.0.1-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:37290ba65e6467034f956742160eea36c7c8bbfd87ba8b2133b73432c724ecf3"},
+    {file = "dgl-1.0.1-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:eefc52e03710aeeef0d6c225392193b7938b304d08f8d9c96b3c7649e4bf2233"},
+    {file = "dgl-1.0.1-cp310-cp310-win_amd64.whl", hash = "sha256:e48ba1a0920a1f9311e1b995f5a692fd19cfd7cbd46fa1289210e93536853f27"},
+    {file = "dgl-1.0.1-cp311-cp311-manylinux1_x86_64.whl", hash = "sha256:ec0e7681e5e949583b4bef9b33fac560bc8a186466293cb0ee2dfe18a28e9842"},
+    {file = "dgl-1.0.1-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:ff8277afd91d30f0cb405a46e1c963018b58e67851b5389c541850ad4ac0268d"},
+    {file = "dgl-1.0.1-cp36-cp36m-macosx_10_10_x86_64.whl", hash = "sha256:ab12af878585fe4960667db9f4d2c925170a9a9207b4978c10d328d8ba2f3e51"},
+    {file = "dgl-1.0.1-cp36-cp36m-macosx_11_0_arm64.whl", hash = "sha256:f3dc41476f831678be9ae0274abf0bf3acafe43a28456c3f4f77be7e9ed78ac7"},
+    {file = "dgl-1.0.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:cc7f0882ea80828e70bf24f6d747cc1a852779325b80ca70f4bb7888c3fc1908"},
+    {file = "dgl-1.0.1-cp36-cp36m-win_amd64.whl", hash = "sha256:e9fbac2dd5857af0b99c093eb9cebfaf3b101b190b8470ed981e18ec6864d42b"},
+    {file = "dgl-1.0.1-cp37-cp37m-macosx_10_10_x86_64.whl", hash = "sha256:c1480df1c5c961a03c1c0a613eb5cc15b79940f14cbe78e075bcefbb33ad93ef"},
+    {file = "dgl-1.0.1-cp37-cp37m-macosx_11_0_arm64.whl", hash = "sha256:e1f1816af2a845440986a3b7e99ea688d1e5064bd4493aa361ceed95615bcb2e"},
+    {file = "dgl-1.0.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:8d6973c3f9b8c8d665585bfa602b798b4702925e8073653a8a54bce1641d2649"},
+    {file = "dgl-1.0.1-cp37-cp37m-manylinux2014_aarch64.whl", hash = "sha256:5ce1d5964ccc16917ea42c5b5fa0fe61aa8f01c90d31669d19f677b3c1acacf5"},
+    {file = "dgl-1.0.1-cp37-cp37m-win_amd64.whl", hash = "sha256:5ed3185f3eee4f67bef2d90c6a6d1549f15996b03d89bb7bfe4831836ee981e6"},
+    {file = "dgl-1.0.1-cp38-cp38-macosx_10_10_x86_64.whl", hash = "sha256:ca16c6ff705585d643a93953763ce7b79257c6c0f746096915d7602443829361"},
+    {file = "dgl-1.0.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:2a1616b68b3355967eeef9c53f1da24cd5df3bb66f3210a6c5b39e1511b3eef2"},
+    {file = "dgl-1.0.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:594d15d9bfa84d86131a03f4597b7c1e95a277d065010e5046dc7d44587efa58"},
+    {file = "dgl-1.0.1-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:65b1c3e04ba19c1bdc27dc54250fe1f91388c159f5a0302bdf6515d3e4f8b01d"},
+    {file = "dgl-1.0.1-cp38-cp38-win_amd64.whl", hash = "sha256:59476e56f457b8810f8052ee56cd0dc4a0ce91e0803850a66e5059c982150c53"},
+    {file = "dgl-1.0.1-cp39-cp39-macosx_10_10_x86_64.whl", hash = "sha256:db0f78f7f51ee22a03ea7d2e834c9467d699602e4f859d353e384596d3e2bb53"},
+    {file = "dgl-1.0.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:c62f5513f0099c45f41c21b134d29ff44e2804415c931e911580dab1b5db242a"},
+    {file = "dgl-1.0.1-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:d40f6355cfddc677e886d181e8efd625edc65c61e608292257df6eac3e6129ba"},
+    {file = "dgl-1.0.1-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:8f37d39f6c8977d4f3ceb234b2b178e01d7da4387617cefee90904f4321e6ce8"},
+    {file = "dgl-1.0.1-cp39-cp39-win_amd64.whl", hash = "sha256:2647a5644d3eb235a17260802df58f2102624d07f627165540f9d0d18b90991b"},
 ]
 
 [package.dependencies]
@@ -499,14 +505,14 @@ files = [
 
 [[package]]
 name = "lightning-utilities"
-version = "0.7.1"
+version = "0.8.0"
 description = "PyTorch Lightning Sample project."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "lightning-utilities-0.7.1.tar.gz", hash = "sha256:9748a5466490d6e45c2df60c1ee77ff37a1a660ea6313bc0832ab7317a081cef"},
-    {file = "lightning_utilities-0.7.1-py3-none-any.whl", hash = "sha256:a7c58e67831c17712736e38e8ad5b81dbf64184ce28684a502e896ecca939b67"},
+    {file = "lightning-utilities-0.8.0.tar.gz", hash = "sha256:8e5d95c7c57f026cdfed7c154303e88c93a7a5e868c9944cb02cf71f1db29720"},
+    {file = "lightning_utilities-0.8.0-py3-none-any.whl", hash = "sha256:22aa107b51c8f50ccef54d08885eb370903eb04148cddb2891b9c65c59de2a6e"},
 ]
 
 [package.dependencies]
@@ -1021,14 +1027,14 @@ test = ["asv", "gmpy2", "mpmath", "pytest", "pytest-cov", "pytest-xdist", "sciki
 
 [[package]]
 name = "setuptools"
-version = "67.6.0"
+version = "67.6.1"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "setuptools-67.6.0-py3-none-any.whl", hash = "sha256:b78aaa36f6b90a074c1fa651168723acbf45d14cb1196b6f02c0fd07f17623b2"},
-    {file = "setuptools-67.6.0.tar.gz", hash = "sha256:2ee892cd5f29f3373097f5a814697e397cf3ce313616df0af11231e2ad118077"},
+    {file = "setuptools-67.6.1-py3-none-any.whl", hash = "sha256:e728ca814a823bf7bf60162daf9db95b93d532948c4c0bea762ce62f60189078"},
+    {file = "setuptools-67.6.1.tar.gz", hash = "sha256:257de92a9d50a60b8e22abfcbb771571fde0dbf3ec234463212027a4eeecbe9a"},
 ]
 
 [package.extras]
@@ -1106,14 +1112,14 @@ opt-einsum = ["opt-einsum (>=3.3)"]
 
 [[package]]
 name = "torchmetrics"
-version = "0.11.3"
+version = "0.11.4"
 description = "PyTorch native Metrics"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "torchmetrics-0.11.3-py3-none-any.whl", hash = "sha256:7797c6e86f7474b6e0beb46f979044354a831e012199e96e52d2208a15ebe418"},
-    {file = "torchmetrics-0.11.3.tar.gz", hash = "sha256:6a2bcc17361f0e4c1668c92595b12ef30ccf9ef1d03263bee7c6136a882afe30"},
+    {file = "torchmetrics-0.11.4-py3-none-any.whl", hash = "sha256:45f892f3534e91f3ad9e2488d1b05a93b7cb76b7d037969435a41a1f24750d9a"},
+    {file = "torchmetrics-0.11.4.tar.gz", hash = "sha256:1fe45a14b44dd65d90199017dd5a4b5a128d56a8a311da7916c402c18c671494"},
 ]
 
 [package.dependencies]
@@ -1166,14 +1172,14 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "1.26.14"
+version = "1.26.15"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
 files = [
-    {file = "urllib3-1.26.14-py2.py3-none-any.whl", hash = "sha256:75edcdc2f7d85b137124a6c3c9fc3933cdeaa12ecb9a6a959f22797a0feca7e1"},
-    {file = "urllib3-1.26.14.tar.gz", hash = "sha256:076907bf8fd355cde77728471316625a4d2f7e713c125f51953bb5b3eecf4f72"},
+    {file = "urllib3-1.26.15-py2.py3-none-any.whl", hash = "sha256:aa751d169e23c7479ce47a0cb0da579e3ede798f994f5816a74e4f4500dcea42"},
+    {file = "urllib3-1.26.15.tar.gz", hash = "sha256:8a388717b9476f934a21484e8c8e61875ab60644d29b9b39e11e4b9dc1c6b305"},
 ]
 
 [package.extras]
@@ -1183,18 +1189,18 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "wheel"
-version = "0.38.4"
+version = "0.40.0"
 description = "A built-package format for Python"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "wheel-0.38.4-py3-none-any.whl", hash = "sha256:b60533f3f5d530e971d6737ca6d58681ee434818fab630c83a734bb10c083ce8"},
-    {file = "wheel-0.38.4.tar.gz", hash = "sha256:965f5259b566725405b05e7cf774052044b1ed30119b5d586b2703aafe8719ac"},
+    {file = "wheel-0.40.0-py3-none-any.whl", hash = "sha256:d236b20e7cb522daf2390fa84c55eea81c5c30190f90f29ae2ca1ad8355bf247"},
+    {file = "wheel-0.40.0.tar.gz", hash = "sha256:cd1196f3faee2b31968d626e1731c94f99cbdb67cf5a46e4f5656cbee7738873"},
 ]
 
 [package.extras]
-test = ["pytest (>=3.0.0)"]
+test = ["pytest (>=6.0.0)"]
 
 [[package]]
 name = "yarl"
@@ -1287,4 +1293,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "3ca117d05515243850fe2996e675b18ba07140f7ac9dde3c89bacb1969188515"
+content-hash = "9b029e542609248cf067284f24eeb6e05a83456deb55a2f9284e0dd51befe9b1"
