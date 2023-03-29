@@ -58,6 +58,7 @@ def main():
         "-a", "--all", "--is_all", dest="is_all", default=False, action="store_true"
     )
     arg.add_argument("-n", "--step", dest="n_step", default=1000, type=int)
+    arg.add_argument("--freq", "--output_freq", dest="out_freq", default=100, type=int)
     arg.add_argument("--restraint", dest="restraint", default=100.0, type=float)
     arg = arg.parse_args()
     #
@@ -130,7 +131,7 @@ def main():
         batch = data.convert_to_batch(r_cg).to(device)
         R = model.forward(batch)[0]["R"]
         #
-        if (i + 1) % 100 == 0:
+        if (i + 1) % arg.output_freq == 0:
             out_fn = output_dir / f"min.{i+1:04d}.pdb"
             xyz = R.cpu().detach().numpy()[out_mask > 0.0][None, out_atom_index]
             output = mdtraj.Trajectory(xyz=xyz, topology=out_top)
