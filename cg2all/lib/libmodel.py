@@ -590,10 +590,31 @@ def build_structure(
 
 
 def download_ckpt_file(model_type, ckpt_fn):
-    import requests
-    sys.stdout.write(f"Downloading ... {ckpt_fn}\n")
-    url = f"https://zenodo.org/record/7742950/files/{ckpt_fn.name}"
-    if not ckpt_fn.parent.exists():
-        ckpt_fn.parent.mkdir()
-    with open(ckpt_fn, "wb") as fout:
-        fout.write(requests.get(url).content)
+    try:
+        import gdown
+
+        #
+        sys.stdout.write(f"Downloading ... {ckpt_fn}\n")
+        url_s = {
+            "CalphaBasedModel": "1uzsVPB_0t0RDp2P8qJ44LzE3JiVowtTx",
+            "ResidueBasedModel": "1KsxfB0B90YQQd1iBzw3buznHIwzN_0sA",
+            "CalphaCMModel": "1kLrmeO2F0WXvy0ujq0H4U5drjnuxNy8d",
+            "BackboneModel": "17OZDDCiwo7M8egPgRIlMfHujOT-oy0Fz",
+            "MainchainModel": "1Q6Xlop_u1hQdLwTlHHdCDxWTC34I8TQg",
+            "Martini": "1GiEtLiIOotLrj--7-jJI8aRE10duQoBE",
+            "PRIMO": "1FW_QFijewI-z48GC-aDEjHMO_8g1syTH",
+        }
+        url = url_s[model_type]
+        if not ckpt_fn.parent.exists():
+            ckpt_fn.parent.mkdir()
+        gdown.download(url, str(ckpt_fn), quiet=True)
+    except:
+        import requests
+
+        #
+        sys.stdout.write(f"Downloading ... {ckpt_fn}\n")
+        url = f"https://zenodo.org/record/7742950/files/{ckpt_fn.name}"
+        if not ckpt_fn.parent.exists():
+            ckpt_fn.parent.mkdir()
+        with open(ckpt_fn, "wb") as fout:
+            fout.write(requests.get(url).content)
