@@ -1026,6 +1026,27 @@ doc = ["matplotlib (>2)", "numpydoc", "pydata-sphinx-theme (==0.9.0)", "sphinx (
 test = ["asv", "gmpy2", "mpmath", "pytest", "pytest-cov", "pytest-xdist", "scikit-umfpack", "threadpoolctl"]
 
 [[package]]
+name = "se3-transformer"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "^3.7"
+files = []
+develop = false
+
+[package.dependencies]
+dgl = ">=0.9"
+e3nn = ">0.3.3"
+torch = "^1.11"
+
+[package.source]
+type = "git"
+url = "https://github.com/huhlim/SE3Transformer.git"
+reference = "HEAD"
+resolved_reference = "644594681cfda61685575f37d15a170bbdada5d8"
+
+[[package]]
 name = "setuptools"
 version = "67.6.1"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
@@ -1293,4 +1314,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "9b029e542609248cf067284f24eeb6e05a83456deb55a2f9284e0dd51befe9b1"
+content-hash = "a15f23743791cd7acf0c208160cee465f42e47b562530c9b2a5e44e5eb8a8764"

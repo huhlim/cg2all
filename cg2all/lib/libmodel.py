@@ -13,13 +13,8 @@ from ml_collections import ConfigDict
 
 import dgl
 
-try:
-    from torch._C import _nvtx
-    from se3_transformer.model import Fiber, SE3Transformer
-    from se3_transformer.model.layers import LinearSE3, NormSE3
-except ImportError:
-    from se3_transformer.model_no_cuda import Fiber, SE3Transformer
-    from se3_transformer.model_no_cuda.layers import LinearSE3, NormSE3
+from se3_transformer import Fiber, SE3Transformer
+from se3_transformer.layers import LinearSE3, NormSE3
 
 from residue_constants import (
     MAX_SS,

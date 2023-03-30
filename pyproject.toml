@@ -22,6 +22,7 @@ e3nn = "^0.5"
 ml-collections = "^0.1.1"
 numpy = "^1.21"
 mdtraj = {git = "https://github.com/huhlim/mdtraj.git"}
+se3_transformer = {git = "https://github.com/huhlim/SE3Transformer.git"}
 
 [tool.poetry.group.dev.dependencies]
 tqdm = "^4.64.1"
