@@ -58,7 +58,7 @@ def main():
         "-a", "--all", "--is_all", dest="is_all", default=False, action="store_true"
     )
     arg.add_argument("-n", "--step", dest="n_step", default=1000, type=int)
-    arg.add_argument("--freq", "--output_freq", dest="out_freq", default=100, type=int)
+    arg.add_argument("--freq", "--output_freq", dest="output_freq", default=100, type=int)
     arg.add_argument("--restraint", dest="restraint", default=100.0, type=float)
     arg = arg.parse_args()
     #
