@@ -9,7 +9,7 @@ A Google Colab notebook is available at [![Google Colab](https://colab.research.
 
 ## Installation
 
-These steps will install Python libraries including [cg2all (this repository)](https://github.com/huhlim/cg2all), [a modified MDTraj](https://github.com/huhlim/mdtraj), and other dependent libraries. The installation steps also place executables `convert_cg2all` and `convert_all2cg` in your python binary directory.
+These steps will install Python libraries including [cg2all (this repository)](https://github.com/huhlim/cg2all), [a modified MDTraj](https://github.com/huhlim/mdtraj), [a modified SE3Transformer](https://github.com/huhlim/SE3Transformer), and other dependent libraries. The installation steps also place executables `convert_cg2all` and `convert_all2cg` in your python binary directory.
 
 This package is tested on Linux (CentOS) and MacOS (Apple Silicon, M1).
 
@@ -44,34 +44,44 @@ pip install mrcfile
 ### convert_cg2all
 convert a coarse-grained protein structure to all-atom model
 ```bash
-usage: convert_cg2all [-h] -p IN_PDB_FN [-d IN_DCD_FN] -o OUT_FN
-                      [--cg {CalphaBasedModel,CA,ca,ResidueBasedModel,RES,res,Martini,martini}]
-                      [--ckpt CKPT_FN] [--time TIME_JSON] [--device DEVICE]
-                      [--proc N_PROC]
+usage: convert_cg2all [-h] -p IN_PDB_FN [-d IN_DCD_FN] -o OUT_FN [-opdb OUTPDB_FN]
+                      [--cg {supported_cg_models}] [--chain-break-cutoff CHAIN_BREAK_CUTOFF] [-a]
+                      [--ckpt CKPT_FN] [--time TIME_JSON] [--device DEVICE] [--batch BATCH_SIZE] [--proc N_PROC]
 
 options:
   -h, --help            show this help message and exit
   -p IN_PDB_FN, --pdb IN_PDB_FN
   -d IN_DCD_FN, --dcd IN_DCD_FN
   -o OUT_FN, --out OUT_FN, --output OUT_FN
-  --cg {CalphaBasedModel,CA,ca,ResidueBasedModel,RES,res,Martini,martini}
+  -opdb OUTPDB_FN
+  --cg {supported_cg_models}
+  --chain-break-cutoff CHAIN_BREAK_CUTOFF
+  -a, --all, --is_all
   --ckpt CKPT_FN
   --time TIME_JSON
   --device DEVICE
+  --batch BATCH_SIZE
   --proc N_PROC
 ```
 #### arguments
 * -p/--pdb: Input PDB file (**mandatory**).
 * -d/--dcd: Input DCD file (optional). If a DCD file is given, the input PDB file will be used to define its topology.
 * -o/--out/--output: Output PDB or DCD file (**mandatory**). If a DCD file is given, it will be a DCD file. Otherwise, a PDB file will be created.
+* -opdb: If a DCD file is given, it will write the last snapshot as a PDB file. (optional)
 * --cg: Coarse-grained representation to use (optional, default=CalphaBasedModel).
-  * CalphaBasedModel, CA, ca: the C-alpha atom for a residue
-  * ResidueBasedModel, RES, res: the center of mass of a residue for the residue
-  * Martini, martini: [MARTINI](http://cgmartini.nl/index.php/martini) model
+  - CalphaBasedModel: CA-trace (atom names should be "CA")
+  - ResidueBasedModel: Residue center-of-mass (atom names should be "CA")
+  - CalphaCMModel: CA-trace + Residue center-of-mass (atom names should be "CA" and "CM")
+  - BackboneModel: Model only with backbone atoms (N, CA, C)
+  - MainchainModel: Model only with mainchain atoms (N, CA, C, O)
+  - Martini: [Martini](http://cgmartini.nl/) model
+  - PRIMO: [PRIMO](http://dx.doi.org/10.1002/prot.22645) model
+* --chain-break-cutoff: The CA-CA distance cutoff that determines chain breaks. (default=10 Angstroms)
 * --ckpt: Input PyTorch ckpt file (optional). If a ckpt file is given, it will override "--cg" option.
-* --time: Output JSON file for recording timing (optional).
-* --device: Specify a device to run the model (optional) You can choose "cpu" or "cuda", or the script will detect one automatically. </br>
+* --time: Output JSON file for recording timing. (optional)
+* --device: Specify a device to run the model. (optional) You can choose "cpu" or "cuda", or the script will detect one automatically. </br>
   "**cpu**" is usually faster than "cuda" unless the input/output system is really big or you provided a DCD file with many frames because it takes a lot for loading a model ckpt file on a GPU.
+* --batch: the number of frames to be dealt at a time. (optional, default=1)
 * --proc: Specify the number of threads for loading input data. It is only used for dealing with a DCD file. (optional, default=OMP_NUM_THREADS or 1)
 
 #### examples
@@ -89,26 +99,60 @@ convert_cg2all -p tests/1jni.calpha.pdb -d tests/1jni.calpha.dcd -o tests/1jni.c
 ### convert_all2cg
 convert an all-atom protein structure to coarse-grained model
 ```bash
-usage: convert_all2cg [-h] -p IN_PDB_FN [-d IN_DCD_FN] -o OUT_FN [--cg {CalphaBasedModel,CA,ca,ResidueBasedModel,RES,res,Martini,martini}]
+usage: convert_all2cg [-h] -p IN_PDB_FN [-d IN_DCD_FN] -o OUT_FN [--cg {supported_cg_models}]
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -p IN_PDB_FN, --pdb IN_PDB_FN
   -d IN_DCD_FN, --dcd IN_DCD_FN
   -o OUT_FN, --out OUT_FN, --output OUT_FN
-  --cg {CalphaBasedModel,CA,ca,ResidueBasedModel,RES,res,Martini,martini}
+  --cg
 ```
 #### arguments
 * -p/--pdb: Input PDB file (**mandatory**).
 * -d/--dcd: Input DCD file (optional). If a DCD file is given, the input PDB file will be used to define its topology.
 * -o/--out/--output: Output PDB or DCD file (**mandatory**). If a DCD file is given, it will be a DCD file. Otherwise, a PDB file will be created.
 * --cg: Coarse-grained representation to use (optional, default=CalphaBasedModel).
-  * CalphaBasedModel, CA, ca: the C-alpha atom for a residue
-  * ResidueBasedModel, RES, res: the center of mass of a residue for the residue
-  * Martini, martini: [MARTINI](http://cgmartini.nl/index.php/martini) model
+  - CalphaBasedModel: CA-trace (atom names should be "CA")
+  - ResidueBasedModel: Residue center-of-mass (atom names should be "CA")
+  - CalphaCMModel: CA-trace + Residue center-of-mass (atom names should be "CA" and "CM")
+  - BackboneModel: Model only with backbone atoms (N, CA, C)
+  - MainchainModel: Model only with mainchain atoms (N, CA, C, O)
+  - Martini: [Martini](http://cgmartini.nl/) model
+  - PRIMO: [PRIMO](http://dx.doi.org/10.1002/prot.22645) model
   
 #### an example
 ```bash
 convert_all2cg -p tests/1ab1_A.pdb -o tests/1ab1_A.calpha.pdb --cg CalphaBasedModel
 ```
 
+<hr/>
+
+### script/cryo_em_minimizer.py 
+Local optimization of protein model structure against given electron density map. This script is a proof-of-concept that utilizes cg2all network to optimize at CA-level resolution with objective functions in both atomistic and CA-level resolutions. It is highly recommended to use **cuda** environment.
+```bash
+usage: cryo_em_minimizer [-h] -p IN_PDB_FN -m IN_MAP_FN -o OUT_DIR [-a] [-n N_STEP] [--freq OUTPUT_FREQ] [--restraint RESTRAINT]
+
+options:
+  -h, --help            show this help message and exit
+  -p IN_PDB_FN, --pdb IN_PDB_FN
+  -m IN_MAP_FN, --map IN_MAP_FN
+  -o OUT_DIR, --out OUT_DIR, --output OUT_DIR
+  -a, --all, --is_all
+  -n N_STEP, --step N_STEP
+  --freq OUTPUT_FREQ, --output_freq OUTPUT_FREQ
+  --restraint RESTRAINT
+```
+#### arguments
+* -p/--pdb: Input PDB file (**mandatory**).
+* -m/--map: Input electron density map file in the MRC or CCP4 format (**mandatory**).
+* -o/--out/--output: Output directory to save optimized structures (**mandatory**).
+* -a/--all/--is_all: Whether the input PDB file is atomistic structure or not. (optional, default=False)
+* -n/--step: The number of minimization steps. (optional, default=1000)
+* --freq/--output_freq: The interval between saving intermediate outputs. (optional, default=100)
+* --restraint: The weight of distance restraints. (optional, default=100.0)
+
+#### an example
+```bash
+./cg2all/script/cryo_em_minimizer.py -p tests/3isr.af2.pdb -m tests/3isr_5.mrc -o 3isr_5+3isr.af2 --all
+```
