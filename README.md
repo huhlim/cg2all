@@ -4,8 +4,19 @@ Convert coarse-grained protein structure to all-atom model
 
 
 ## Web server / Google Colab notebook
-A demo web page is available via [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/huhlim/cg2all)</br>
-A Google Colab notebook is available at [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huhlim/cg2all/blob/main/cg2all.ipynb)
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/huhlim/cg2all)</br>
+A demo web page is available for conversions of CG model to all-atom structure via Huggingface space.</br>
+
+[![Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huhlim/cg2all/blob/main/cg2all.ipynb)</br>
+A Google Colab notebook is available for tasks:
+- Task 1: Conversion of an all-atom structure to a CG model using __convert_all2cg__
+- Task 2: Conversion of a CG model to an all-atom structure using __convert_cg2all__
+- Task 3: Conversion of a CG simulation trajectory to an atomistic simulation trajectory using __convert_cg2all__
+
+[![Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huhlim/cg2all/blob/main/cryo_em_minimizer.ipynb)</br>
+A Google Colab notebook is available for local optimization of a protein model structure against a cryo-EM density map using __cryo_em_minimizer.py__
+
+
 
 ## Installation
 
