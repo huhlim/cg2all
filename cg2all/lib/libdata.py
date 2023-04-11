@@ -300,7 +300,7 @@ class PredictionData(Dataset):
         self.radius = radius
         self.self_loop = self_loop
         self.dtype = dtype
-        self.chain_break_cutoff=chain_break_cutoff
+        self.chain_break_cutoff = chain_break_cutoff
         self.is_all = is_all
         #
         if self.dcd_fn is None:
@@ -314,11 +314,19 @@ class PredictionData(Dataset):
 
     def pdb_to_cg(self, *arg, **argv):
         if self.topology_map is None:
-            return self.cg_model(chain_break_cutoff=self.chain_break_cutoff,is_all=self.is_all, *arg, **argv)
+            return self.cg_model(
+                chain_break_cutoff=self.chain_break_cutoff,
+                is_all=self.is_all,
+                *arg,
+                **argv,
+            )
         else:
             return self.cg_model(
-                    chain_break_cutoff=self.chain_break_cutoff,
-                is_all=self.is_all, *arg, **argv, topology_map=self.topology_map
+                chain_break_cutoff=self.chain_break_cutoff,
+                is_all=self.is_all,
+                *arg,
+                **argv,
+                topology_map=self.topology_map,
             )
 
     def __getitem__(self, index):
@@ -389,8 +397,6 @@ class PredictionData(Dataset):
         data.edata["edge_feat_0"] = edge_feat[..., None]
 
         return data
-
-
 
 
 def resSeq_to_number(resSeq_s: np.ndarray):

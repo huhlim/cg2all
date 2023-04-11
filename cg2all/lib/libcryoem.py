@@ -251,11 +251,11 @@ class CoarseGrainedGeometryEnergy(object):
         else:
             bond_energy = torch.sum(torch.square(d) * bonded) / n_bonded
         #
-        angled = batch.ndata["continuous"][1:] * batch.ndata["continuous"][:-1]
+        angled = bonded[1:] * bonded[:-1]
         n_angled = torch.sum(angled)
         v1 = v_norm(v1)
         v0 = -v1
-        angle = acos_safe(inner_product(v0, v1))
+        angle = acos_safe(inner_product(v0[:-1], v1[1:]))
         angle = (angle - self.b_ang0[0]) / self.b_ang0[1]
         #
         angle_energy = torch.square(angle)

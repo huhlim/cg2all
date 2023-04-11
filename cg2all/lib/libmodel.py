@@ -443,13 +443,14 @@ class Model(nn.Module):
         self.structure_module = StructureModule(_config.structure_module)
 
     def set_constant_tensors(self, device, dtype=DTYPE):
-        _RIGID_TRANSFORMS_TENSOR = RIGID_TRANSFORMS_TENSOR.to(device)
-        _RIGID_GROUPS_TENSOR = RIGID_GROUPS_TENSOR.to(device)
-        _TORSION_ENERGY_TENSOR = TORSION_ENERGY_TENSOR.to(device)
-        if dtype != DTYPE:
-            _RIGID_TRANSFORMS_TENSOR = _RIGID_TRANSFORMS_TENSOR.type(dtype)
-            _RIGID_GROUPS_TENSOR = _RIGID_GROUPS_TENSOR.type(dtype)
-            _TORSION_ENERGY_TENSOR = _TORSION_ENERGY_TENSOR.type(dtype)
+        _RIGID_TRANSFORMS_TENSOR = RIGID_TRANSFORMS_TENSOR.type(dtype)
+        _RIGID_GROUPS_TENSOR = RIGID_GROUPS_TENSOR.type(dtype)
+        _TORSION_ENERGY_TENSOR = TORSION_ENERGY_TENSOR.type(dtype)
+        #
+        _RIGID_TRANSFORMS_TENSOR = _RIGID_TRANSFORMS_TENSOR.to(device)
+        _RIGID_GROUPS_TENSOR = _RIGID_GROUPS_TENSOR.to(device)
+        _TORSION_ENERGY_TENSOR = _TORSION_ENERGY_TENSOR.to(device)
+        #
         _RIGID_TRANSFORMS_DEP = RIGID_TRANSFORMS_DEP.to(device)
         _RIGID_GROUPS_DEP = RIGID_GROUPS_DEP.to(device)
         _TORSION_ENERGY_DEP = TORSION_ENERGY_DEP.to(device)

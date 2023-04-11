@@ -25,6 +25,7 @@ AMINO_ACID_s = (
     "TYR",
     "UNK",
 )
+AMINO_ACID_one_letter = "ACDEFGHHIKLMNPQRSTVWYX"
 PROLINE_INDEX = AMINO_ACID_s.index("PRO")
 
 SECONDARY_STRUCTURE_s = ("", "C", "H", "E")

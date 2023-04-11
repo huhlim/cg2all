@@ -340,7 +340,7 @@ def loss_f_bonded_energy_aux(batch: dgl.DGLGraph, R: torch.Tensor):
             torch.abs(d_ssbond - BOND_LENGTH_DISULFIDE)
         ) / R.size(0)
 
-    return bond_energy_pro + bond_energy_ssbond
+    return bond_energy_pro + (bond_energy_ssbond.sum())
 
 
 def loss_f_backbone_torsion(batch: dgl.DGLGraph, R: torch.Tensor):
@@ -631,39 +631,6 @@ def test():
     TORSION_PARs = (TORSION_ENERGY_TENSOR.to(device), TORSION_ENERGY_DEP.to(device))
     #
     import time
-
-    # find_atomic_clash(model, R_model, RIGID_OPs)
-    # loss_f_atomic_clash(batch, batch.ndata["output_xyz"], RIGID_OPs)
-    # batch = native
-    # clash0 = find_atomic_clash(batch, batch.ndata["output_xyz"], RIGID_OPs, vdw_scale=0.9, energy_clamp=0.005)
-    # clash_native = dgl.ops.copy_e_sum(batch, clash0).detach().numpy()
-    #
-    # batch = model
-    # clash = find_atomic_clash(batch, batch.ndata["output_xyz"], RIGID_OPs, vdw_scale=0.9, energy_clamp=0.005)
-    # clash_model = dgl.ops.copy_e_sum(batch, clash).detach().numpy()
-    # for i, (n, m) in enumerate(zip(clash_native, clash_model)):
-    #     if m > 0.05:
-    #         print(i + 1, n.round(4), m.round(4), "CLASH")
-    #     else:
-    #         print(i + 1, n.round(4), m.round(4))
-
-    # t_ang = model.ndata["correct_torsion"][..., 0]
-    # sc = [torch.cos(t_ang), torch.sin(t_ang)]
-    # sc = torch.stack(sc, dim=-1)
-    # loss_f_torsion_angle(native, sc)
-    # native.ndata["output_xyz_ref"] = get_output_xyz_ref(native, R_model)
-    # bb = model.ndata["correct_bb"]
-    # o = loss_f_FAPE_all(native, R_model, bb)
-    # print(o)
-    # native.ndata["output_xyz_ref"] = native.ndata["output_xyz"]
-    # o = loss_f_FAPE_all(native, R_model, bb)
-    # print(o)
-    # native.ndata["output_xyz_ref"] = native.ndata["output_xyz_alt"]
-    # o = loss_f_FAPE_all(native, R_model, bb)
-    # print(o)
-    #
-    # R_ref.requires_grad_(True)
-    # R_model.requires_grad_(True)
 
 
 if __name__ == "__main__":
