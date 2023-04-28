@@ -574,7 +574,7 @@ class CoarseGrainedGeometryEnergy(object):
         else:
             raise ValueError(self.cg_model_name)
         #
-        self.angle_aa_map = torch.zeros((MAX_RESIDUE_TYPE, MAX_RESIDUE_TYPE), dtype=torch.long)
+        self.angle_aa_map = torch.zeros((MAX_RESIDUE_TYPE, MAX_RESIDUE_TYPE), dtype=torch.long, device=device)
         for i, aa_i in enumerate(AMINO_ACID_s):
             ii = {"PRO": 1, "GLY": 2}.get(aa_i, 0)
             for j, aa_j in enumerate(AMINO_ACID_s):
