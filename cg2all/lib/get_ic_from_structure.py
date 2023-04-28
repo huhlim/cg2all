@@ -134,9 +134,7 @@ def report(ic_s):
                         data_all -= lit
                         data_all = (data_all + np.pi) % (2 * np.pi) - np.pi
                         data_all += lit
-                        data_all[data_all > np.pi] = (
-                            2 * np.pi - data_all[data_all > np.pi]
-                        )
+                        data_all[data_all > np.pi] = 2 * np.pi - data_all[data_all > np.pi]
                 except:
                     data_all = np.zeros((0,))
                 #
@@ -157,9 +155,7 @@ def report(ic_s):
                             data_ss -= lit
                             data_ss = (data_ss + np.pi) % (2 * np.pi) - np.pi
                             data_ss += lit
-                            data_ss[data_ss > np.pi] = (
-                                2 * np.pi - data_ss[data_ss > np.pi]
-                            )
+                            data_ss[data_ss > np.pi] = 2 * np.pi - data_ss[data_ss > np.pi]
                     except:
                         data_ss = np.zeros((0,))
                     #

@@ -228,10 +228,7 @@ class ResidueBasedModel(BaseClass):
         self.top_cg = self.top.subset(self.top.select("name CA"))
         #
         mass_weighted_R = self.R * self.atomic_mass[None, ..., None]
-        R_cg = (
-            mass_weighted_R.sum(axis=-2)
-            / self.atomic_mass.sum(axis=-1)[None, ..., None]
-        )
+        R_cg = mass_weighted_R.sum(axis=-2) / self.atomic_mass.sum(axis=-1)[None, ..., None]
         #
         self.R_cg = R_cg[..., None, :]
         self.atom_mask_cg = self.atom_mask_pdb[:, (ATOM_INDEX_CA,)]
@@ -290,10 +287,7 @@ class CalphaCMModel(BaseClass):
         self.atom_mask_cg[:, :] = self.atom_mask_pdb[:, ATOM_INDEX_CA][:, None]
         #
         mass_weighted_R = self.R * self.atomic_mass[None, ..., None]
-        R_cm = (
-            mass_weighted_R.sum(axis=-2)
-            / self.atomic_mass.sum(axis=-1)[None, ..., None]
-        )
+        R_cm = mass_weighted_R.sum(axis=-2) / self.atomic_mass.sum(axis=-1)[None, ..., None]
         self.R_cg[:, :, 1] = R_cm
 
 

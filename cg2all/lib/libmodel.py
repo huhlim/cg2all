@@ -95,9 +95,7 @@ STRUCTURE_MODULE["fiber_pass"] = [(0, 64), (1, 32)]
 STRUCTURE_MODULE["fiber_hidden"] = None
 STRUCTURE_MODULE["num_degrees"] = 3
 STRUCTURE_MODULE["num_channels"] = 32
-STRUCTURE_MODULE[
-    "channels_div"
-] = 2  # no idea... # of channels is divided by this number
+STRUCTURE_MODULE["channels_div"] = 2  # no idea... # of channels is divided by this number
 STRUCTURE_MODULE["fiber_edge"] = None
 #
 STRUCTURE_MODULE["loss_weight"] = ConfigDict()
@@ -163,9 +161,7 @@ def set_model_config(arg: dict, cg_model) -> ConfigDict:
             (1, 1 + int(x[1])),
         ]
     else:
-        raise ValueError(
-            f"Unknown rotation representation, {config.structure_module.rotation_rep}"
-        )
+        raise ValueError(f"Unknown rotation representation, {config.structure_module.rotation_rep}")
     #
     if config.globals.ss_dep:
         fiber_out = []
@@ -218,21 +214,13 @@ class InitializationModule(nn.Module):
         #
         linear_module = []
         if config.norm[0]:
-            linear_module.append(
-                NormSE3(Fiber(config.fiber_init), nonlinearity=nonlinearity)
-            )
-        linear_module.append(
-            LinearSE3(Fiber(config.fiber_init), Fiber(config.fiber_pass))
-        )
+            linear_module.append(NormSE3(Fiber(config.fiber_init), nonlinearity=nonlinearity))
+        linear_module.append(LinearSE3(Fiber(config.fiber_init), Fiber(config.fiber_pass)))
         #
         for _ in range(config.num_linear_layers - 1):
             if config.norm[0]:
-                linear_module.append(
-                    NormSE3(Fiber(config.fiber_pass), nonlinearity=nonlinearity)
-                )
-            linear_module.append(
-                LinearSE3(Fiber(config.fiber_pass), Fiber(config.fiber_pass))
-            )
+                linear_module.append(NormSE3(Fiber(config.fiber_pass), nonlinearity=nonlinearity))
+            linear_module.append(LinearSE3(Fiber(config.fiber_pass), Fiber(config.fiber_pass)))
         #
         self.linear_module = nn.Sequential(*linear_module)
 
@@ -255,12 +243,8 @@ class EdgeModule(nn.Module):
         linear_module = []
         for _ in range(config.num_linear_layers):
             if config.norm[0]:
-                linear_module.append(
-                    NormSE3(Fiber(config.fiber_edge), nonlinearity=nonlinearity)
-                )
-            linear_module.append(
-                LinearSE3(Fiber(config.fiber_edge), Fiber(config.fiber_edge))
-            )
+                linear_module.append(NormSE3(Fiber(config.fiber_edge), nonlinearity=nonlinearity))
+            linear_module.append(LinearSE3(Fiber(config.fiber_edge), Fiber(config.fiber_edge)))
         #
         self.linear_module = nn.Sequential(*linear_module)
 
@@ -316,29 +300,17 @@ class StructureModule(nn.Module):
         linear_module = []
         #
         if config.norm[0]:
-            linear_module.append(
-                NormSE3(Fiber(config.fiber_struct), nonlinearity=nonlinearity)
-            )
-        linear_module.append(
-            LinearSE3(Fiber(config.fiber_struct), Fiber(config.fiber_pass))
-        )
+            linear_module.append(NormSE3(Fiber(config.fiber_struct), nonlinearity=nonlinearity))
+        linear_module.append(LinearSE3(Fiber(config.fiber_struct), Fiber(config.fiber_pass)))
         #
         for _ in range(config.num_linear_layers - 2):
             if config.norm[0]:
-                linear_module.append(
-                    NormSE3(Fiber(config.fiber_pass), nonlinearity=nonlinearity)
-                )
-            linear_module.append(
-                LinearSE3(Fiber(config.fiber_pass), Fiber(config.fiber_pass))
-            )
+                linear_module.append(NormSE3(Fiber(config.fiber_pass), nonlinearity=nonlinearity))
+            linear_module.append(LinearSE3(Fiber(config.fiber_pass), Fiber(config.fiber_pass)))
         #
         if config.norm[0]:
-            linear_module.append(
-                NormSE3(Fiber(config.fiber_pass), nonlinearity=nonlinearity)
-            )
-        linear_module.append(
-            LinearSE3(Fiber(config.fiber_pass), Fiber(config.fiber_out))
-        )
+            linear_module.append(NormSE3(Fiber(config.fiber_pass), nonlinearity=nonlinearity))
+        linear_module.append(LinearSE3(Fiber(config.fiber_pass), Fiber(config.fiber_out)))
         #
         self.linear_module = nn.Sequential(*linear_module)
 
@@ -351,9 +323,7 @@ class StructureModule(nn.Module):
             return self.output_to_opr_6D(output, ss_dep=ss_dep)
         elif self.rotation_rep.startswith("quat"):
             deg_0, deg_1 = self.rotation_rep.split("_")[1:]
-            return self.output_to_opr_quat(
-                output, int(deg_0), int(deg_1), ss_dep=ss_dep
-            )
+            return self.output_to_opr_quat(output, int(deg_0), int(deg_1), ss_dep=ss_dep)
 
     def output_to_opr_6D(self, output, ss_dep=False):
         bb0 = output["1"][:, :2]
@@ -485,9 +455,7 @@ class Model(nn.Module):
         #
         out = self.structure_module(out)
         #
-        bb, sc, bb0, sc0, ss0 = self.structure_module.output_to_opr(
-            out, ss_dep=self.ss_dep
-        )
+        bb, sc, bb0, sc0, ss0 = self.structure_module.output_to_opr(out, ss_dep=self.ss_dep)
         ret["bb"] = bb
         ret["sc"] = sc
         ret["bb0"] = bb0

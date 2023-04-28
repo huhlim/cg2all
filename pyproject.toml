@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cg2all"
-version = "0.9"
+version = "0.9.1"
 description = "Convert coarse-grained protein structure to all-atom structure"
 authors = [
     "Lim Heo <huhlim@gmail.com>",
@@ -13,6 +13,7 @@ repository = "https://github.com/huhlim/cg2all"
 [tool.poetry.scripts]
 convert_all2cg = "cg2all.script.convert_all2cg:main"
 convert_cg2all = "cg2all.script.convert_cg2all:main"
+cryo_em_minimizer = "cg2all.script.cryo_em_minimizer:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -31,3 +32,7 @@ pytorch-lightning = "^1.7.3"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+include = '\.pyi?$'

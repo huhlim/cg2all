@@ -20,8 +20,7 @@ def get_rigid_group_by_torsion(ss, residue_name, tor_name, index=-1, sub_index=-
     rigid_group[1] = np.array(rigid_group[1]) / 10.0  # in nm
     if len(rigid_group[0]) == 0:
         raise ValueError(
-            "Cannot find rigid group for"
-            f" {residue_name} {tor_name} {index} {sub_index}\n"
+            "Cannot find rigid group for" f" {residue_name} {tor_name} {index} {sub_index}\n"
         )
     return t_ang, rigid_group[0], rigid_group[1]
 
@@ -29,9 +28,7 @@ def get_rigid_group_by_torsion(ss, residue_name, tor_name, index=-1, sub_index=-
 def get_rigid_transform_by_torsion(ss, residue_name, tor_name, index, sub_index=-1):
     rigid_transform = None
     for X, Y, tR in rigid_group_transformations[ss][residue_name]:
-        if (X[0] == tor_name and X[1] == index) and (
-            sub_index < 0 or X[2] == sub_index
-        ):
+        if (X[0] == tor_name and X[1] == index) and (sub_index < 0 or X[2] == sub_index):
             rigid_transform = (np.array(tR[1]), np.array(tR[0]) / 10.0)
             break
     return Y, rigid_transform
@@ -116,9 +113,7 @@ else:
                     rigid_group_transformations[ss][residue_name],
                 )
 
-    rigid_transforms_tensor = np.zeros(
-        (MAX_SS, MAX_RESIDUE_TYPE, MAX_RIGID, 4, 3), dtype=float
-    )
+    rigid_transforms_tensor = np.zeros((MAX_SS, MAX_RESIDUE_TYPE, MAX_RIGID, 4, 3), dtype=float)
     rigid_transforms_tensor[:, :, :3, :3] = np.eye(3)
     rigid_transforms_dep = np.full((MAX_RESIDUE_TYPE, MAX_RIGID), -1, dtype=int)
     for s, ss in enumerate(SECONDARY_STRUCTURE_s):
@@ -206,9 +201,7 @@ else:
         (MAX_SS, MAX_RESIDUE_TYPE, MAX_TORSION_ENERGY, MAX_TORSION_ENERGY_TERM, 5),
         dtype=float,
     )
-    torsion_energy_dep = np.tile(
-        np.array([0, 1, 2, 3]), [MAX_RESIDUE_TYPE, MAX_TORSION_ENERGY, 1]
-    )
+    torsion_energy_dep = np.tile(np.array([0, 1, 2, 3]), [MAX_RESIDUE_TYPE, MAX_TORSION_ENERGY, 1])
     for s, ss in enumerate(SECONDARY_STRUCTURE_s):
         if ss == "":
             fn = DATA_HOME / "torsion_energy_terms.json"

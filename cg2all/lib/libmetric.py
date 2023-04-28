@@ -14,9 +14,7 @@ from torch_basics import v_size, v_norm_safe, inner_product, torsion_angle, pi
 
 
 def rmsd_CA(R, R_ref):
-    return torch.sqrt(
-        torch.mean(torch.pow(R[:, ATOM_INDEX_CA, :] - R_ref[:, ATOM_INDEX_CA, :], 2))
-    )
+    return torch.sqrt(torch.mean(torch.pow(R[:, ATOM_INDEX_CA, :] - R_ref[:, ATOM_INDEX_CA, :], 2)))
 
 
 def rmsd_rigid(R, R_ref):
@@ -36,9 +34,7 @@ def rmse_bonded(R, is_continuous):
     v1 = R[1:, ATOM_INDEX_N, :] - R[:-1, ATOM_INDEX_C, :]
     d1 = v_size(v1)
     v1 = v_norm_safe(v1)
-    rmse_bond_length = torch.sqrt(
-        torch.sum(torch.pow(d1 - BOND_LENGTH0, 2) * bonded) / n_bonded
-    )
+    rmse_bond_length = torch.sqrt(torch.sum(torch.pow(d1 - BOND_LENGTH0, 2) * bonded) / n_bonded)
 
     # vector: -CA -> -C
     v0 = v_norm_safe(R[:-1, ATOM_INDEX_C, :] - R[:-1, ATOM_INDEX_CA, :])

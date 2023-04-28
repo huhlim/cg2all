@@ -71,18 +71,17 @@ class PDBset(Dataset):
         self.min_cg = min_cg
         self.perturb_pos = perturb_pos
         #
-        if use_pt is not None and use_pt.startswith("mixed"):
-            mixed_s = {"mixed_0": ["CA_aug_min+FLIP", "min_100", "min_010", "min_001"]}
-            self.use_pt = mixed_s[use_pt]
-        else:
-            self.use_pt = use_pt
+        self.use_pt = use_pt
         self.crop = crop
         #
         self.use_md = use_md
         self.n_frame = n_frame
+        if use_md:
+            self.use_pt = None
+            self.augment = ""
 
     def __len__(self):
-        return self.n_pdb * self.n_frame
+        return self.n_pdb
 
     def pdb_to_cg(self, *arg, **argv):
         if self.topology_map is None:
@@ -92,18 +91,14 @@ class PDBset(Dataset):
 
     def __getitem__(self, index):
         pdb_index = index // self.n_frame
-        frame_index = index % self.n_frame
         pdb_id = self.pdb_s[pdb_index]
+        frame_index = np.random.randint(0, self.n_frame)
         #
         if self.use_pt is not None:
-            if isinstance(self.use_pt, str):
-                pt_name = self.use_pt
-            else:
-                pt_name = random.choice(self.use_pt)
             if self.use_md:
-                pt_fn = self.basedir / f"{pdb_id}_{pt_name}.{frame_index}.pt"
+                pt_fn = self.basedir / f"{pdb_id}_{self.use_pt}.{frame_index}.pt"
             else:
-                pt_fn = self.basedir / f"{pdb_id}_{pt_name}.pt"
+                pt_fn = self.basedir / f"{pdb_id}_{self.use_pt}.pt"
             #
             if pt_fn.exists():
                 data = torch.load(pt_fn)
@@ -116,12 +111,11 @@ class PDBset(Dataset):
                 else:
                     return data
         #
-        pdb_fn = self.basedir / f"{pdb_id}.pdb"
         if self.use_md:
-            dcd_fn = self.basedir / f"{pdb_id}.dcd"
-            cg = self.pdb_to_cg(pdb_fn, dcd_fn=dcd_fn, frame_index=frame_index)
+            pdb_fn = self.basedir / f"{pdb_id}/pdb/sample.{frame_index}.pdb"
         else:
-            cg = self.pdb_to_cg(pdb_fn)
+            pdb_fn = self.basedir / f"{pdb_id}.pdb"
+        cg = self.pdb_to_cg(pdb_fn)
         cg.get_structure_information()
         #
         if self.augment != "":
@@ -131,9 +125,7 @@ class PDBset(Dataset):
                 cg_aug.get_structure_information()
                 self.augment_torsion(cg, cg_aug)
             else:
-                sys.stderr.write(
-                    f"WARNING: augment PDB does NOT exist, {str(pdb_fn_aug)}\n"
-                )
+                sys.stderr.write(f"WARNING: augment PDB does NOT exist, {str(pdb_fn_aug)}\n")
         #
         if self.min_cg != "":
             pdb_fn_cg = self.basedir / f"cg/{pdb_id}/{pdb_id}.{self.min_cg}.pdb"
@@ -142,9 +134,7 @@ class PDBset(Dataset):
                 assert cg_min.R_cg[0].shape == cg.R_cg[0].shape
                 r_cg = torch.as_tensor(cg_min.R_cg[0], dtype=self.dtype)
             else:
-                sys.stderr.write(
-                    f"WARNING: min_cg PDB does NOT exist, {str(pdb_fn_cg)}\n"
-                )
+                sys.stderr.write(f"WARNING: min_cg PDB does NOT exist, {str(pdb_fn_cg)}\n")
         else:
             r_cg = torch.as_tensor(cg.R_cg[0], dtype=self.dtype)
         #
@@ -180,9 +170,7 @@ class PDBset(Dataset):
                 ssbond_index[cys_i] = cys_j
         data.ndata["ssbond_index"] = ssbond_index
         #
-        edge_feat = torch.zeros(
-            (data.num_edges(), 3), dtype=self.dtype
-        )  # bonded / ssbond / space
+        edge_feat = torch.zeros((data.num_edges(), 3), dtype=self.dtype)  # bonded / ssbond / space
         #
         # bonded
         pair_s = [(i - 1, i) for i, cont in enumerate(cg.continuous[0]) if cont]
@@ -208,20 +196,12 @@ class PDBset(Dataset):
         edge_feat[edge_feat.sum(dim=-1) == 0.0, 2] = 1.0
         data.edata["edge_feat_0"] = edge_feat[..., None]
         #
-        data.ndata["atomic_radius"] = torch.as_tensor(
-            cg.atomic_radius, dtype=self.dtype
-        )
+        data.ndata["atomic_radius"] = torch.as_tensor(cg.atomic_radius, dtype=self.dtype)
         data.ndata["atomic_mass"] = torch.as_tensor(cg.atomic_mass, dtype=self.dtype)
-        data.ndata["input_atom_mask"] = torch.as_tensor(
-            cg.atom_mask_cg, dtype=self.dtype
-        )
+        data.ndata["input_atom_mask"] = torch.as_tensor(cg.atom_mask_cg, dtype=self.dtype)
         data.ndata["output_atom_mask"] = torch.as_tensor(cg.atom_mask, dtype=self.dtype)
-        data.ndata["pdb_atom_mask"] = torch.as_tensor(
-            cg.atom_mask_pdb, dtype=self.dtype
-        )
-        data.ndata["heavy_atom_mask"] = torch.as_tensor(
-            cg.atom_mask_heavy, dtype=self.dtype
-        )
+        data.ndata["pdb_atom_mask"] = torch.as_tensor(cg.atom_mask_pdb, dtype=self.dtype)
+        data.ndata["heavy_atom_mask"] = torch.as_tensor(cg.atom_mask_heavy, dtype=self.dtype)
         data.ndata["output_xyz"] = torch.as_tensor(cg.R[0], dtype=self.dtype)
         data.ndata["output_xyz_alt"] = torch.as_tensor(cg.R_alt[0], dtype=self.dtype)
         #
@@ -368,9 +348,7 @@ class PredictionData(Dataset):
                 ssbond_index[cys_i] = cys_j
         data.ndata["ssbond_index"] = ssbond_index
         #
-        edge_feat = torch.zeros(
-            (data.num_edges(), 3), dtype=self.dtype
-        )  # bonded / ssbond / space
+        edge_feat = torch.zeros((data.num_edges(), 3), dtype=self.dtype)  # bonded / ssbond / space
         #
         # bonded
         pair_s = [(i - 1, i) for i, cont in enumerate(cg.continuous[0]) if cont]
@@ -412,9 +390,7 @@ def resSeq_to_number(resSeq_s: np.ndarray):
     return resSeq_number_s, resSeqIns_s
 
 
-def create_topology_from_data(
-    data: dgl.DGLGraph, write_native: bool = False
-) -> mdtraj.Topology:
+def create_topology_from_data(data: dgl.DGLGraph, write_native: bool = False) -> mdtraj.Topology:
     top = mdtraj.Topology()
     #
     chain_prev = -1
@@ -457,9 +433,7 @@ def create_topology_from_data(
         else:
             mask = data.ndata["output_atom_mask"][i_res]
             #
-            for i_atm, atom_name in zip(
-                ref_res.output_atom_index, ref_res.output_atom_s
-            ):
+            for i_atm, atom_name in zip(ref_res.output_atom_index, ref_res.output_atom_s):
                 # for i_atm, atom_name in enumerate(ref_res.atom_s):
                 if mask[i_atm] > 0.0:
                     element = mdtraj.core.element.Element.getBySymbol(atom_name[0])
@@ -494,9 +468,7 @@ def create_trajectory_from_batch(
             mask = data.ndata["output_atom_mask"].cpu().detach().numpy()
         #
         ssbond = []
-        for cys_i, cys_j in enumerate(
-            data.ndata["ssbond_index"].cpu().detach().numpy()
-        ):
+        for cys_i, cys_j in enumerate(data.ndata["ssbond_index"].cpu().detach().numpy()):
             if cys_j != -1:
                 ssbond.append((cys_j, cys_i))
         ssbond_s.append(sorted(ssbond))

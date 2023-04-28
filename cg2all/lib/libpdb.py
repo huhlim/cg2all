@@ -13,9 +13,7 @@ np.set_printoptions(suppress=True)
 
 
 class PDB(object):
-    def __init__(
-        self, pdb_fn, dcd_fn=None, stride=1, frame_index=None, is_all=True, **kwarg
-    ):
+    def __init__(self, pdb_fn, dcd_fn=None, stride=1, frame_index=None, is_all=True, **kwarg):
         self.pdb_name = str(pdb_fn).split("/")[-1][:-4]
 
         # read protein
@@ -24,9 +22,7 @@ class PDB(object):
         if self.__class__.__name__ == "PRIMO" and (not is_all):
             update_primo_names(pdb)
         #
-        load_index = pdb.top.select(
-            "protein or (resname HSD or resname HSE or resname MSE)"
-        )
+        load_index = pdb.top.select("protein or (resname HSD or resname HSE or resname MSE)")
         #
         if dcd_fn is None:
             self.is_dcd = False
@@ -35,9 +31,7 @@ class PDB(object):
         else:
             self.is_dcd = True
             if frame_index is None:
-                traj = mdtraj.load(
-                    dcd_fn, top=pdb.top, atom_indices=load_index, stride=stride
-                )
+                traj = mdtraj.load(dcd_fn, top=pdb.top, atom_indices=load_index, stride=stride)
             else:
                 traj = mdtraj.load_frame(
                     dcd_fn,
@@ -51,18 +45,14 @@ class PDB(object):
         #
         self.process(traj, pdb_fn, is_all=is_all, **kwarg)
 
-    def process(
-        self, traj, pdb_fn, is_all=True, check_validity=True, compute_dssp=True, **kwarg
-    ):
+    def process(self, traj, pdb_fn, is_all=True, check_validity=True, compute_dssp=True, **kwarg):
         self.traj = traj
         self.top = traj.top
         #
         self.n_frame = self.traj.n_frames
         self.n_chain = self.top.n_chains
         self.n_residue = self.top.n_residues
-        self.chain_index = np.array(
-            [r.chain.index for r in self.top.residues], dtype=int
-        )
+        self.chain_index = np.array([r.chain.index for r in self.top.residues], dtype=int)
         # self.resSeq = np.array([r.resSeq for r in self.top.residues])
         self.resSeq = [r.resSeq for r in self.top.residues]
         self.residue_name = []
@@ -163,9 +153,8 @@ class PDB(object):
         self.atom_mask_heavy = np.zeros((self.n_residue, MAX_ATOM), dtype=float)
         self.atomic_radius = np.zeros((self.n_residue, MAX_ATOM, 2, 2), dtype=float)
         self.atomic_mass = np.zeros((self.n_residue, MAX_ATOM), dtype=float)
-        self.bfactors = np.full(
-            (self.n_frame, self.n_residue, MAX_ATOM), 100.0, dtype=float
-        )
+        self.atomic_charge = np.zeros((self.n_residue, MAX_ATOM), dtype=float)
+        self.bfactors = np.full((self.n_frame, self.n_residue, MAX_ATOM), 100.0, dtype=float)
         #
         if len(self.ssbond_s) > 0:
             ssbond_s = np.concatenate(self.ssbond_s, dtype=int)
@@ -197,9 +186,7 @@ class PDB(object):
                     continue
                 if atom_name not in ref_res.atom_s:
                     if verbose:
-                        sys.stderr.write(
-                            f"Unrecognized atom_name: {residue_name} {atom_name}\n"
-                        )
+                        sys.stderr.write(f"Unrecognized atom_name: {residue_name} {atom_name}\n")
                     continue
                 i_atm = ref_res.atom_s.index(atom_name)
                 self.R[:, i_res, i_atm, :] = self.traj.xyz[:, atom.index, :]
@@ -212,11 +199,13 @@ class PDB(object):
             #
             n_atom = len(ref_res.atom_s)
             self.atomic_radius[i_res, :n_atom] = ref_res.atomic_radius[:n_atom]
+            self.atomic_charge[i_res, :n_atom] = ref_res.atomic_charge[:n_atom]
             self.atom_mask[i_res, :n_atom] = 1.0
             if i_res in ssbond_s:
                 HG1_index = ref_res.atom_s.index("HG1")
                 self.atom_mask[i_res, HG1_index] = 0.0
                 self.atomic_mass[i_res, HG1_index] = 0.0
+                self.atomic_charge[i_res, HG1_index] = 0.0
         self.bfactors = np.clip(self.bfactors, 0.0, 100.0)
 
     # get continuity information, whether it has a previous residue
@@ -229,11 +218,12 @@ class PDB(object):
         self.continuous[1, :-1] = same_chain
 
         # chain breaks
-        dr = self.R[:, 1:, ATOM_INDEX_N] - self.R[:, :-1, ATOM_INDEX_C]
-        d = v_size(dr).mean(axis=0)
-        chain_breaks = d > BOND_BREAK
-        self.continuous[0, 1:][chain_breaks] = False
-        self.continuous[1, :-1][chain_breaks] = False
+        if BOND_BREAK > 0.0:
+            dr = self.R[:, 1:, ATOM_INDEX_N] - self.R[:, :-1, ATOM_INDEX_C]
+            d = v_size(dr).mean(axis=0)
+            chain_breaks = d > BOND_BREAK
+            self.continuous[0, 1:][chain_breaks] = False
+            self.continuous[1, :-1][chain_breaks] = False
         #
         has_backbone = np.all(self.atom_mask_pdb[:, :4] > 0.0, axis=-1)
         self.continuous[0, 1:][~has_backbone[:-1]] = False
@@ -307,18 +297,14 @@ class PDB(object):
         ss = [SECONDARY_STRUCTURE_s[s] for s in self.ss[:, i_res]]
         #
         torsion_mask = np.zeros(MAX_TORSION, dtype=float)
-        torsion_angle_s = np.zeros(
-            (self.n_frame, MAX_TORSION, MAX_PERIODIC), dtype=float
-        )
+        torsion_angle_s = np.zeros((self.n_frame, MAX_TORSION, MAX_PERIODIC), dtype=float)
         for tor in torsion_s[self.residue_name[i_res]]:
             if tor is None or tor.name in ["BB"]:
                 continue
             #
             t_ang0 = []
             for s in ss:
-                t_ang0.append(
-                    get_rigid_group_by_torsion(s, residue_name, tor.name, tor.index)[0]
-                )
+                t_ang0.append(get_rigid_group_by_torsion(s, residue_name, tor.name, tor.index)[0])
             t_ang0 = np.asarray(t_ang0)
             #
             index = [ref_res.atom_s.index(atom) for atom in tor.atom_s[:4]]
@@ -481,9 +467,7 @@ def generate_structure_from_bb_and_torsion(residue_index, ss, bb, torsion):
         opr = combine_operations(transforms, opr)
         #
         for i_tor in range(1, MAX_RIGID):
-            prev = np.take_along_axis(
-                opr, transforms_dep[:, i_tor][:, None, None, None], axis=1
-            )
+            prev = np.take_along_axis(opr, transforms_dep[:, i_tor][:, None, None, None], axis=1)
             opr[:, i_tor] = combine_operations(prev[:, 0], opr[:, i_tor])
 
         opr = np.take_along_axis(opr, rigids_dep[..., None, None], axis=1)
@@ -494,6 +478,4 @@ def generate_structure_from_bb_and_torsion(residue_index, ss, bb, torsion):
 if __name__ == "__main__":
     pdb = PDB("pdb.processed/1ab1_A.pdb")
     pdb.get_structure_information()
-    generate_structure_from_bb_and_torsion(
-        pdb.residue_index, pdb.ss, pdb.bb, pdb.torsion
-    )
+    generate_structure_from_bb_and_torsion(pdb.residue_index, pdb.ss, pdb.bb, pdb.torsion)

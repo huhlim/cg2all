@@ -54,12 +54,8 @@ def main():
                 ]
         # fmt:on
     )
-    arg.add_argument(
-        "--chain-break-cutoff", dest="chain_break_cutoff", default=10.0, type=float
-    )
-    arg.add_argument(
-        "-a", "--all", "--is_all", dest="is_all", default=False, action="store_true"
-    )
+    arg.add_argument("--chain-break-cutoff", dest="chain_break_cutoff", default=10.0, type=float)
+    arg.add_argument("-a", "--all", "--is_all", dest="is_all", default=False, action="store_true")
     arg.add_argument("--ckpt", dest="ckpt_fn", default=None)
     arg.add_argument("--time", dest="time_json", default=None)
     arg.add_argument("--device", dest="device", default=None)

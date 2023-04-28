@@ -5,8 +5,10 @@ import torch
 import dgl
 from typing import Optional, List
 
-from libconfig import DTYPE, EPS
+from libconfig import DTYPE, EPS, DATA_HOME
 from residue_constants import (
+    MAX_RESIDUE_TYPE,
+    AMINO_ACID_s,
     PROLINE_INDEX,
     ATOM_INDEX_N,
     ATOM_INDEX_CA,
@@ -61,8 +63,7 @@ def loss_f(
         loss["v_cntr"] = loss_f_v_cntr(batch, R) * loss_weight.v_cntr
     if loss_weight.get("FAPE_CA", 0.0) > 0.0:
         loss["FAPE_CA"] = (
-            loss_f_FAPE_CA(batch, R, opr_bb, d_clamp=loss_weight.FAPE_d_clamp)
-            * loss_weight.FAPE_CA
+            loss_f_FAPE_CA(batch, R, opr_bb, d_clamp=loss_weight.FAPE_d_clamp) * loss_weight.FAPE_CA
         )
     if loss_weight.get("FAPE_all", 0.0) > 0.0:
         loss["FAPE_all"] = (
@@ -76,13 +77,10 @@ def loss_f(
         )
     if loss_weight.get("bonded_energy", 0.0) > 0.0:
         loss["bonded_energy"] = (
-            loss_f_bonded_energy(batch, R, weight_s=(1.0, 0.5))
-            + loss_f_bonded_energy_aux(batch, R)
+            loss_f_bonded_energy(batch, R, weight_s=(1.0, 0.5)) + loss_f_bonded_energy_aux(batch, R)
         ) * loss_weight.bonded_energy
     if loss_weight.get("backbone_torsion", 0.0) > 0.0:
-        loss["backbone_torsion"] = (
-            loss_f_backbone_torsion(batch, R) * loss_weight.backbone_torsion
-        )
+        loss["backbone_torsion"] = loss_f_backbone_torsion(batch, R) * loss_weight.backbone_torsion
     if loss_weight.get("torsion_angle", 0.0) > 0.0:
         loss["torsion_angle"] = (
             loss_f_torsion_angle(batch, ret["sc"], sc0=ret.get("sc0", None))
@@ -123,12 +121,8 @@ def loss_f(
 
 def get_output_xyz_ref(batch: dgl.DGLGraph, R: torch.Tensor) -> torch.Tensor:
     mask = batch.ndata["heavy_atom_mask"]
-    d = torch.sum(
-        torch.pow(R - batch.ndata["output_xyz"], 2).sum(dim=-1) * mask, dim=-1
-    )
-    d_alt = torch.sum(
-        torch.pow(R - batch.ndata["output_xyz_alt"], 2).sum(dim=-1) * mask, dim=-1
-    )
+    d = torch.sum(torch.pow(R - batch.ndata["output_xyz"], 2).sum(dim=-1) * mask, dim=-1)
+    d_alt = torch.sum(torch.pow(R - batch.ndata["output_xyz_alt"], 2).sum(dim=-1) * mask, dim=-1)
     #
     xyz = torch.where(
         (d <= d_alt)[:, None, None],
@@ -149,14 +143,10 @@ def loss_f_v_cntr(batch: dgl.DGLGraph, R: torch.Tensor):
     r_cntr = get_residue_center_of_mass(R, batch.ndata["atomic_mass"])
     v_cntr = r_cntr - R[:, ATOM_INDEX_CA]
     loss_angle = torch.mean(
-        torch.abs(
-            1.0 - inner_product(v_norm_safe(v_cntr), v_norm(batch.ndata["v_cntr"]))
-        )
+        torch.abs(1.0 - inner_product(v_norm_safe(v_cntr), v_norm(batch.ndata["v_cntr"])))
     )
     #
-    loss_distance = torch.mean(
-        torch.abs(v_size(v_cntr) - v_size(batch.ndata["v_cntr"]))
-    )
+    loss_distance = torch.mean(torch.abs(v_size(v_cntr) - v_size(batch.ndata["v_cntr"])))
     return loss_angle + loss_distance * 10.0
 
 
@@ -210,9 +200,7 @@ def loss_f_FAPE_CA(
         r = rotate_vector_inv(_bb[:, :, :3], _R[None, :] - _bb[:, :, 3])
         r_ref = rotate_vector_inv(bb_ref[:, :, :3], R_ref[None, :] - bb_ref[:, :, 3])
         dr = r - r_ref
-        d = torch.clamp(
-            torch.sqrt(torch.pow(dr, 2).sum(dim=-1) + EPS**2), max=d_clamp
-        )
+        d = torch.clamp(torch.sqrt(torch.pow(dr, 2).sum(dim=-1) + EPS**2), max=d_clamp)
         loss = loss + torch.mean(d)
         #
         first = last
@@ -237,13 +225,9 @@ def loss_f_FAPE_all(
         _R = R[first:last]
         _bb = bb[first:last][:, None]  # shape=(N, 1, 4, 3)
         bb_ref = data.ndata["correct_bb"][:, None]
-        R_ref = data.ndata[
-            "output_xyz_ref"
-        ]  # use symmetry-corrected reference structure
+        R_ref = data.ndata["output_xyz_ref"]  # use symmetry-corrected reference structure
         #
-        r = rotate_vector_inv(
-            _bb[:, :, None, :3], _R[None, :] - _bb[..., 3, :][:, None]
-        )
+        r = rotate_vector_inv(_bb[:, :, None, :3], _R[None, :] - _bb[..., 3, :][:, None])
         r_ref = rotate_vector_inv(
             bb_ref[:, :, None, :3], R_ref[None, :] - bb_ref[..., 3, :][:, None]
         )
@@ -257,7 +241,7 @@ def loss_f_FAPE_all(
 
 
 # Bonded energy penalties
-def loss_f_bonded_energy(batch: dgl.DGLGraph, R: torch.Tensor, weight_s=(1.0, 0.0)):
+def loss_f_bonded_energy(batch: dgl.DGLGraph, R: torch.Tensor, weight_s=(1.0, 0.5)):
     if weight_s[0] == 0.0:
         return 0.0
 
@@ -315,9 +299,7 @@ def loss_f_bonded_energy_aux(batch: dgl.DGLGraph, R: torch.Tensor):
         R_pro_N = R[proline, ATOM_INDEX_N]
         R_pro_CD = R[proline, ATOM_INDEX_PRO_CD]
         d_pro = v_size(R_pro_N - R_pro_CD)
-        bond_energy_pro = torch.sum(
-            torch.abs(d_pro - BOND_LENGTH_PROLINE_RING)
-        ) / R.size(0)
+        bond_energy_pro = torch.sum(torch.abs(d_pro - BOND_LENGTH_PROLINE_RING)) / R.size(0)
     else:
         bond_energy_pro = torch.zeros(1, dtype=DTYPE, device=R.device)
 
@@ -340,7 +322,7 @@ def loss_f_bonded_energy_aux(batch: dgl.DGLGraph, R: torch.Tensor):
             torch.abs(d_ssbond - BOND_LENGTH_DISULFIDE)
         ) / R.size(0)
 
-    return bond_energy_pro + (bond_energy_ssbond.sum())
+    return bond_energy_pro.sum() + bond_energy_ssbond.sum()
 
 
 def loss_f_backbone_torsion(batch: dgl.DGLGraph, R: torch.Tensor):
@@ -374,9 +356,7 @@ def loss_f_backbone_torsion(batch: dgl.DGLGraph, R: torch.Tensor):
     angle_ref = torsion_angle(r_ref)
     #
     loss = torch.sum(
-        1.0
-        - (torch.cos(angle) * torch.cos(angle_ref))
-        - (torch.sin(angle) * torch.sin(angle_ref))
+        1.0 - (torch.cos(angle) * torch.cos(angle_ref)) - (torch.sin(angle) * torch.sin(angle_ref))
     )
     loss = loss / angle.size(0)
     return loss
@@ -500,9 +480,7 @@ def loss_f_torsion_energy(
     par = TORSION_PARs[0][ss, residue_type]
     atom_index = TORSION_PARs[1][residue_type]
     #
-    r = torch.take_along_dim(R, atom_index.view(n_residue, -1, 1), 1).view(
-        n_residue, -1, 4, 3
-    )
+    r = torch.take_along_dim(R, atom_index.view(n_residue, -1, 1), 1).view(n_residue, -1, 4, 3)
     t_ang = torsion_angle(r)
     #
     t_ang = (t_ang[..., None] + par[..., 3]) * par[..., 1] - par[..., 2]
@@ -577,6 +555,113 @@ def find_atomic_clash(
 
     feat = torch.cat(feat, dim=0)
     return feat
+
+
+class CoarseGrainedGeometryEnergy(object):
+    def __init__(self, cg_model_name, device, use_aa_specific=False):
+        self.cg_model_name = cg_model_name
+        if cg_model_name == "ResidueBasedModel":
+            self.use_aa_specific = True
+        else:
+            self.use_aa_specific = use_aa_specific
+        self.set_param(device)
+
+    def set_param(self, device):
+        if self.cg_model_name == "CalphaBasedModel":
+            data_fn = DATA_HOME / "calpha_geometry_params.dat"
+        elif self.cg_model_name == "ResidueBasedModel":
+            data_fn = DATA_HOME / "residue_geometry_params.dat"
+        else:
+            raise ValueError(self.cg_model_name)
+        #
+        self.angle_aa_map = torch.zeros((MAX_RESIDUE_TYPE, MAX_RESIDUE_TYPE), dtype=torch.long)
+        for i, aa_i in enumerate(AMINO_ACID_s):
+            ii = {"PRO": 1, "GLY": 2}.get(aa_i, 0)
+            for j, aa_j in enumerate(AMINO_ACID_s):
+                jj = {"PRO": 1, "GLY": 2}.get(aa_j, 0)
+                self.angle_aa_map[i, j] = ii * 3 + jj
+        #
+        with open(data_fn) as fp:
+            self.b_len0 = torch.zeros(
+                (MAX_RESIDUE_TYPE, MAX_RESIDUE_TYPE, 2), dtype=DTYPE, device=device
+            )
+            self.b_ang0 = torch.zeros((MAX_RESIDUE_TYPE, 9, 2), dtype=DTYPE, device=device)
+            self.vdw = torch.zeros((MAX_RESIDUE_TYPE, MAX_RESIDUE_TYPE), dtype=DTYPE, device=device)
+            #
+            for line in fp:
+                x = line.strip().split()
+                if x[0] == "BOND_LENGTH":
+                    aa0, aa1 = x[1], x[2]
+                    p = torch.as_tensor([float(x[3]), float(x[4])])
+                    if aa0 == "ANY":
+                        self.b_len0[:, :] = p[None, None, :]
+                    elif self.use_aa_specific:
+                        i = AMINO_ACID_s.index(aa0)
+                        j = AMINO_ACID_s.index(aa1)
+                        self.b_len0[i, j] = p
+                elif x[0] == "BOND_ANGLE":
+                    aa0, aa1, aa2 = x[1], x[2], x[3]
+                    p = torch.as_tensor([float(x[4]), float(x[5])])
+                    if aa0 == "ANY":
+                        self.b_ang0[:, :] = p[None, None, :]
+                    elif self.use_aa_specific:
+                        i = AMINO_ACID_s.index(aa0)
+                        j = ["XXX", "PRO", "GLY"].index(aa1)
+                        k = ["XXX", "PRO", "GLY"].index(aa2)
+                        jk = j * 3 + k
+                        self.b_ang0[i, jk] = p
+                else:
+                    i = AMINO_ACID_s.index(x[1])
+                    j = AMINO_ACID_s.index(x[2])
+                    self.vdw[i, j] = float(x[3])
+
+    def eval(self, batch):
+        return self.eval_bonded(batch) + self.eval_vdw(batch)
+
+    def eval_bonded(self, batch, weight=[1.0, 1.0]):
+        r_cg = batch.ndata["pos"]
+        residue_type = batch.ndata["residue_type"]
+        #
+        bonded = batch.ndata["continuous"][1:]
+        n_bonded = torch.sum(bonded)
+        b_len0 = self.b_len0[residue_type[1:], residue_type[:-1]]
+        v1 = r_cg[1:] - r_cg[:-1]
+        d = (v_size(v1) - b_len0[:, 0]) / b_len0[:, 1]
+        bond_energy = torch.sum(torch.square(d) * bonded)
+        #
+        angled = bonded[1:] * bonded[:-1]
+        n_angled = torch.sum(angled)
+        angle_type = self.angle_aa_map[residue_type[:-2], residue_type[2:]]
+        b_ang0 = self.b_ang0[residue_type[1:-1], angle_type]
+        v1 = v_norm(v1)
+        v0 = -v1
+        angle = acos_safe(inner_product(v0[:-1], v1[1:]))
+        angle = (angle - b_ang0[:, 0]) / b_ang0[:, 1]
+        #
+        angle_energy = torch.square(angle)
+        angle_energy = torch.sum(torch.square(angle) * angled)
+        #
+        return bond_energy * weight[0] + angle_energy * weight[1]
+
+    def eval_vdw(self, batch):
+        r_cg = batch.ndata["pos"]
+        #
+        g = dgl.radius_graph(r_cg, 0.5, self_loop=False)
+        edges = g.edges()
+        sequence_separation = edges[1] - edges[0]
+        valid = sequence_separation > 2
+        edges = (edges[0][valid], edges[1][valid])
+        #
+        dij = v_size(r_cg[edges[0]] - r_cg[edges[1]])
+        #
+        index = batch.ndata["residue_type"]
+        i = index[edges[0]]
+        j = index[edges[1]]
+        vdw_sum = self.vdw[i, j]
+        #
+        x = -torch.clamp(dij - vdw_sum, max=0.0)
+        energy = torch.square(x).sum()
+        return energy
 
 
 def test():

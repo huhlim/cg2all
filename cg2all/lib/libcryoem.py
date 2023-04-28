@@ -31,8 +31,8 @@ from torch_basics import (
 from libdata import resSeq_to_number
 
 from libloss import loss_f_bonded_energy_aux as loss_f_bonded_energy_aa_aux
-
-SYSTEM_SIZE_DEPENDENT = True
+from libloss import CoarseGrainedGeometryEnergy, loss_f_torsion_energy
+# from libmd import loss_f_nonbonded, BackboneTorsionEnergy
 
 
 def trilinear_interpolation(
@@ -99,9 +99,7 @@ class CryoEM_loss(object):
             apix = np.array([mrc.voxel_size.x, mrc.voxel_size.y, mrc.voxel_size.z])
             xyz_origin = np.array([header.origin.x, header.origin.y, header.origin.z])
             if np.all(xyz_origin == 0.0):
-                xyz_origin = np.array(
-                    [header.nxstart, header.nystart, header.nzstart], dtype=float
-                )
+                xyz_origin = np.array([header.nxstart, header.nystart, header.nzstart], dtype=float)
                 xyz_origin *= apix
             xyz_size = np.array([header.mx, header.my, header.mz], dtype=int)
         #
@@ -113,9 +111,7 @@ class CryoEM_loss(object):
         self.rho_max = torch.max(self.rho)
 
     def set_weights(self, data):
-        self.weights = torch.zeros(
-            (data.cg.n_residue, MAX_ATOM), dtype=DTYPE, device=self.device
-        )
+        self.weights = torch.zeros((data.cg.n_residue, MAX_ATOM), dtype=DTYPE, device=self.device)
         self.mask = torch.zeros((data.cg.n_residue, MAX_ATOM), dtype=DTYPE)
         #
         for i_res, residue_type_index in enumerate(data.cg.residue_index):
@@ -125,9 +121,7 @@ class CryoEM_loss(object):
             ref_res = residue_s[residue_name]
             #
             mask = data.cg.atom_mask[i_res]
-            for i_atm, atom_name in zip(
-                ref_res.output_atom_index, ref_res.output_atom_s
-            ):
+            for i_atm, atom_name in zip(ref_res.output_atom_index, ref_res.output_atom_s):
                 if mask[i_atm] > 0.0:
                     element = mdtraj.core.element.Element.getBySymbol(atom_name[0])
                     self.mask[i_res, i_atm] = mask[i_atm]
@@ -147,10 +141,7 @@ class CryoEM_loss(object):
         rho = trilinear_interpolation(xyz, self.rho, self.xyz_size)
         v_em = 1.0 - (rho - self.rho_thr) / (self.rho_max - self.rho_thr)
         v_em = torch.clamp(v_em, max=1.0)
-        if SYSTEM_SIZE_DEPENDENT:
-            u_em = torch.sum(self.weights * v_em)
-        else:
-            u_em = torch.mean(self.weights * v_em)
+        u_em = torch.sum(self.weights * v_em)
         return u_em
 
 
@@ -166,10 +157,7 @@ def loss_f_bonded_energy_aa(batch: dgl.DGLGraph, R: torch.Tensor, weight_s=(1.0,
     #
     # bond lengths
     d1 = v_size(v1) - BOND_LENGTH0
-    if SYSTEM_SIZE_DEPENDENT:
-        bond_energy = torch.sum(torch.square(d1) * bonded)
-    else:
-        bond_energy = torch.sum(torch.square(d1) * bonded) / n_bonded
+    bond_energy = torch.sum(torch.square(d1) * bonded)
     if weight_s[1] == 0.0:
         return bond_energy * weight_s[0]
     #
@@ -177,6 +165,7 @@ def loss_f_bonded_energy_aa(batch: dgl.DGLGraph, R: torch.Tensor, weight_s=(1.0,
     v0 = R[:-1, ATOM_INDEX_C, :] - R[:-1, ATOM_INDEX_CA, :]
     # vector: N -> CA
     v2 = R[1:, ATOM_INDEX_CA, :] - R[1:, ATOM_INDEX_N, :]
+
     #
     # bond angles
     def bond_angle(v1, v2):
@@ -189,10 +178,7 @@ def loss_f_bonded_energy_aa(batch: dgl.DGLGraph, R: torch.Tensor, weight_s=(1.0,
     a12 = bond_angle(-v1, v2) - BOND_ANGLE0[1]
     #
     angle_energy = torch.square(a01) + torch.square(a12)
-    if SYSTEM_SIZE_DEPENDENT:
-        angle_energy = torch.sum(angle_energy * bonded)
-    else:
-        angle_energy = torch.sum(angle_energy * bonded) / n_bonded
+    angle_energy = torch.sum(angle_energy * bonded)
     #
     return bond_energy * weight_s[0] + angle_energy * weight_s[1]
 
@@ -204,117 +190,87 @@ class DistanceRestraint(object):
         g, d0 = dgl.radius_graph(r_cg0, radius, self_loop=False, get_distances=True)
         self.edge_src, self.edge_dst = g.edges()
         self.d0 = d0[:, 0]
+        #
+        # plddt = torch.as_tensor(data.cg.bfactors[0, valid_residue, ATOM_INDEX_CA], dtype=DTYPE)
+        # if plddt.sum() > 0.0:
+        #     plddt = torch.full_like(plddt, 100.0)
+        # plddt_pair = torch.minimum(plddt[self.edge_src], plddt[self.edge_dst])
+        # weight = torch.clamp((plddt_pair - 70.0) / 20.0, min=0.0, max=1.0)
+        # active = weight > 0.0
+        # #
+        # self.d0 = d0[active, 0]
+        # self.weight = weight[active].to(device)
+        # self.edge_src = self.edge_src[active]
+        # self.edge_dst = self.edge_dst[active]
 
     def eval(self, batch):
         r_cg = batch.ndata["pos"]
         dr = r_cg[self.edge_dst] - r_cg[self.edge_src]
         d = torch.sqrt(torch.square(dr).sum(dim=-1))
-        if SYSTEM_SIZE_DEPENDENT:
-            loss = torch.sum(torch.square(d - self.d0))
-        else:
-            loss = torch.mean(torch.square(d - self.d0))
+        # loss = torch.square(d - self.d0) * self.weight
+        loss = torch.square(d - self.d0)
+        loss = torch.sum(loss)
         return loss
 
 
-class CoarseGrainedGeometryEnergy(object):
-    def __init__(self, device):
-        self.set_param(device)
-
-    def set_param(self, device):
-        with open(DATA_HOME / "calpha_geometry_params.dat") as fp:
-            self.vdw = torch.zeros(
-                (MAX_RESIDUE_TYPE, MAX_RESIDUE_TYPE), dtype=DTYPE, device=device
-            )
-            for line in fp:
-                x = line.strip().split()
-                if x[0] == "BOND_LENGTH":
-                    self.b_len0 = (float(x[1]), float(x[2]))
-                elif x[0] == "BOND_ANGLE":
-                    self.b_ang0 = (float(x[1]), float(x[2]))
-                else:
-                    i = AMINO_ACID_s.index(x[1])
-                    j = AMINO_ACID_s.index(x[2])
-                    self.vdw[i, j] = float(x[3])
-
-    def eval(self, batch):
-        return self.eval_bonded(batch) + self.eval_vdw(batch)
-
-    def eval_bonded(self, batch):
-        r_cg = batch.ndata["pos"]
-        #
-        bonded = batch.ndata["continuous"][1:]
-        n_bonded = torch.sum(bonded)
-        v1 = r_cg[1:] - r_cg[:-1]
-        d = (v_size(v1) - self.b_len0[0]) / self.b_len0[1]
-        if SYSTEM_SIZE_DEPENDENT:
-            bond_energy = torch.sum(torch.square(d) * bonded)
-        else:
-            bond_energy = torch.sum(torch.square(d) * bonded) / n_bonded
-        #
-        angled = bonded[1:] * bonded[:-1]
-        n_angled = torch.sum(angled)
-        v1 = v_norm(v1)
-        v0 = -v1
-        angle = acos_safe(inner_product(v0[:-1], v1[1:]))
-        angle = (angle - self.b_ang0[0]) / self.b_ang0[1]
-        #
-        angle_energy = torch.square(angle)
-        if SYSTEM_SIZE_DEPENDENT:
-            angle_energy = torch.sum(torch.square(angle) * angled)
-        else:
-            angle_energy = torch.sum(torch.square(angle) * angled) / n_angled
-        #
-        return bond_energy + angle_energy
-
-    def eval_vdw(self, batch):
-        r_cg = batch.ndata["pos"]
-        #
-        g = dgl.radius_graph(r_cg, 0.5, self_loop=False)
-        edges = g.edges()
-        sequence_separation = edges[1] - edges[0]
-        valid = sequence_separation > 2
-        edges = (edges[0][valid], edges[1][valid])
-        #
-        dij = v_size(r_cg[edges[0]] - r_cg[edges[1]])
-        #
-        index = batch.ndata["residue_type"]
-        i = index[edges[0]]
-        j = index[edges[1]]
-        vdw_sum = self.vdw[i, j]
-        #
-        x = -torch.clamp(dij - vdw_sum, max=0.0)
-        energy = torch.square(x).sum()
-        return energy
-
-
 class CryoEMLossFunction(object):
-    def __init__(self, mrc_fn, data, device, is_all=True, restraint=100.0):
+    def __init__(
+        self,
+        mrc_fn,
+        data,
+        device,
+        model,
+        model_type="ResidueBasedModel",
+        is_all=True,
+        restraint=100.0,
+    ):
         self.is_all = is_all
+        if is_all:
+            self.RIGID_OPs = model.RIGID_OPs
+            self.TORSION_PARs = model.TORSION_PARs
         #
         self.cryoem_loss_f = CryoEM_loss(mrc_fn, data, 0.0, device, is_all=is_all)
         self.distance_restraint = DistanceRestraint(data, device, radius=1.0)
-        self.geometry_energy = CoarseGrainedGeometryEnergy(device)
+        self.geometry_energy = CoarseGrainedGeometryEnergy(model_type, device)
+        # self.backbone_torsion = BackboneTorsionEnergy(data, device=device)
         #
         self.weight = {}
         self.weight["cryo_em"] = 1.0
-        self.weight["bond_length"] = 1.0
-        self.weight["bond_length_aux"] = 1.0
-        self.weight["geometry"] = 0.1
+        self.weight["bond"] = 1.0
+        # self.weight["torsion"] = 0.1
+        # self.weight["backbone"] = 0.1
+        # self.weight["nb"] = 0.1
+        self.weight["cg"] = 0.1
         self.weight["restraint"] = restraint
 
-    def eval(self, batch, R):
+    def eval(self, batch, ret):
+        R = ret["R"]
+        #
         loss = {}
         loss["cryo_em"] = self.cryoem_loss_f.eval(R)
         if self.is_all:
-            loss["bond_length"] = loss_f_bonded_energy_aa(batch, R)
-            loss["bond_length_aux"] = loss_f_bonded_energy_aa_aux(batch, R) * R.size(0)
-        loss["geometry"] = self.geometry_energy.eval(batch)
+            if self.weight.get("bond", 0.0) > 0.0:
+                loss["bond"] = loss_f_bonded_energy_aa(batch, R)
+                loss["bond"] = loss["bond"] + loss_f_bonded_energy_aa_aux(batch, R) * R.size(0)
+            if self.weight.get("torsion", 0.0) > 0.0:
+                loss["torsion"] = loss_f_torsion_energy(
+                    batch, R, ret["ss"], self.TORSION_PARs
+                ) * R.size(0)
+            # if self.weight.get("backbone", 0.0) > 0.0:
+            #     loss["backbone"] = self.backbone_torsion(R)
+            # if self.weight.get("nb", 0.0) > 0.0:
+            #     loss["nb"] = loss_f_nonbonded(batch, R, self.RIGID_OPs)
+
+        loss["cg"] = self.geometry_energy.eval(batch)
         loss["restraint"] = self.distance_restraint.eval(batch)
         #
         loss_sum = 0.0
         for name, value in loss.items():
             loss_sum = loss_sum + value * self.weight[name]
         return loss_sum, loss
+
+    def __call__(self, batch, ret):
+        return self.eval(batch, ret)[0]
 
 
 class MinimizableData(object):
@@ -336,9 +292,7 @@ class MinimizableData(object):
         pos = r_cg[valid_residue, :]
         geom_s = self.cg.get_geometry(pos, self.cg.atom_mask_cg, self.cg.continuous[0])
         #
-        node_feat = self.cg.geom_to_feature(
-            geom_s, self.cg.continuous, dtype=self.dtype
-        )
+        node_feat = self.cg.geom_to_feature(geom_s, self.cg.continuous, dtype=self.dtype)
         data = dgl.radius_graph(pos[:, 0], self.radius, self_loop=False)
         data.ndata["pos"] = pos[:, 0]
         data.ndata["node_feat_0"] = node_feat["0"][..., None]  # shape=(N, 16, 1)
@@ -347,21 +301,20 @@ class MinimizableData(object):
         edge_src, edge_dst = data.edges()
         data.edata["rel_pos"] = pos[edge_dst, 0] - pos[edge_src, 0]
         #
-        data.ndata["chain_index"] = torch.as_tensor(
-            self.cg.chain_index, dtype=torch.long
-        )
+        data.ndata["chain_index"] = torch.as_tensor(self.cg.chain_index, dtype=torch.long)
         resSeq, resSeqIns = resSeq_to_number(self.cg.resSeq)
         data.ndata["resSeq"] = torch.as_tensor(resSeq, dtype=torch.long)
         data.ndata["resSeqIns"] = torch.as_tensor(resSeqIns, dtype=torch.long)
-        data.ndata["residue_type"] = torch.as_tensor(
-            self.cg.residue_index, dtype=torch.long
-        )
-        data.ndata["continuous"] = torch.as_tensor(
-            self.cg.continuous[0], dtype=self.dtype
-        )
-        data.ndata["output_atom_mask"] = torch.as_tensor(
-            self.cg.atom_mask, dtype=self.dtype
-        )  #
+        data.ndata["residue_type"] = torch.as_tensor(self.cg.residue_index, dtype=torch.long)
+        data.ndata["continuous"] = torch.as_tensor(self.cg.continuous[0], dtype=self.dtype)
+        data.ndata["output_atom_mask"] = torch.as_tensor(self.cg.atom_mask, dtype=self.dtype)  #
+        #
+        # aa-specific
+        data.ndata["output_xyz"] = torch.as_tensor(self.cg.R[0], dtype=self.dtype)
+        data.ndata["atomic_radius"] = torch.as_tensor(self.cg.atomic_radius, dtype=self.dtype)
+        data.ndata["atomic_mass"] = torch.as_tensor(self.cg.atomic_mass, dtype=self.dtype)
+        data.ndata["atomic_charge"] = torch.as_tensor(self.cg.atomic_charge, dtype=self.dtype)
+        #
         ssbond_index = torch.full((data.num_nodes(),), -1, dtype=torch.long)
         for cys_i, cys_j in self.cg.ssbond_s:
             if cys_i < cys_j:  # because of loss_f_atomic_clash
@@ -370,9 +323,7 @@ class MinimizableData(object):
                 ssbond_index[cys_i] = cys_j
         data.ndata["ssbond_index"] = ssbond_index
         #
-        edge_feat = torch.zeros(
-            (data.num_edges(), 3), dtype=self.dtype
-        )  # bonded / ssbond / space
+        edge_feat = torch.zeros((data.num_edges(), 3), dtype=self.dtype)  # bonded / ssbond / space
         #
         # bonded
         pair_s = [(i - 1, i) for i, cont in enumerate(self.cg.continuous[0]) if cont]
