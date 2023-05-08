@@ -125,7 +125,6 @@ def internal_to_cartesian(
     b_ang: float,
     t_ang: float,
 ) -> np.ndarray:
-
     v1 = r0 - r1
     v2 = r0 - r2
 

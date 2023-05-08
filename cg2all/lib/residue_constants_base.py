@@ -412,9 +412,15 @@ def read_CHARMM_prm(fn):
         if not read:
             continue
         x = line.strip().split()
+        if "!" in x:
+            x = x[: x.index("!")]
         epsilon = float(x[2])
         r_min = float(x[3]) * 0.1
-        epsilon_14 = float(x[2])
-        r_min_14 = float(x[3]) * 0.1
+        if len(x) >= 6:
+            epsilon_14 = float(x[5])
+            r_min_14 = float(x[6]) * 0.1
+        else:
+            epsilon_14 = float(x[2])
+            r_min_14 = float(x[3]) * 0.1
         radius_s[x[0]] = np.array([[epsilon, r_min], [epsilon_14, r_min_14]])
     return radius_s, par_dihedrals

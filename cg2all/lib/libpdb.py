@@ -435,6 +435,7 @@ def generate_structure_from_bb_and_torsion(residue_index, ss, bb, torsion):
     n_frame = bb.shape[0]
     n_residue = bb.shape[1]
     R = np.zeros((n_frame, n_residue, MAX_ATOM, 3), dtype=float)
+
     #
     def rotate_matrix(R, X):
         return np.einsum("...ij,...jk->...ik", R, X)
