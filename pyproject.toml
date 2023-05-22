@@ -9,6 +9,7 @@ authors = [
 license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/huhlim/cg2all"
+exclude = ["cg2all/set*"]
 
 [tool.poetry.scripts]
 convert_all2cg = "cg2all.script.convert_all2cg:main"
