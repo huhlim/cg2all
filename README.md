@@ -1,8 +1,6 @@
 # cg2all
 Convert coarse-grained protein structure to all-atom model
 
-
-
 ## Web server / Google Colab notebook
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/huhlim/cg2all)</br>
 A demo web page is available for conversions of CG model to all-atom structure via Huggingface space.</br>
@@ -15,8 +13,6 @@ A Google Colab notebook is available for tasks:
 
 [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/huhlim/cg2all/blob/main/cryo_em_minimizer.ipynb)</br>
 A Google Colab notebook is available for local optimization of a protein model structure against a cryo-EM density map using __cryo_em_minimizer.py__
-
-
 
 ## Installation
 
@@ -167,3 +163,6 @@ options:
 ```bash
 ./cg2all/script/cryo_em_minimizer.py -p tests/3isr.af2.pdb -m tests/3isr_5.mrc -o 3isr_5+3isr.af2 --all
 ```
+
+## Reference
+Lim Heo & Michael Feig, "One particle per residue is sufficient to describe all-atom protein structures", _bioRxiv_ (**2023**). [Link](https://www.biorxiv.org/content/10.1101/2023.05.22.541652v1)
