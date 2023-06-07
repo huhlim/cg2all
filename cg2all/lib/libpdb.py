@@ -337,20 +337,23 @@ class PDB(object):
             R_alt[:, before] = self.R[:, i_res, after].copy()
         return R_alt
 
-    def get_structure_information(self):
+    def get_structure_information(self, bb_only=False):
         # get rigid body operations, backbone_orientations and torsion angles
         self.bb_mask = np.zeros(self.n_residue, dtype=float)
         self.bb = np.zeros((self.n_frame, self.n_residue, 4, 3), dtype=float)
-        self.torsion_mask = np.zeros((self.n_residue, MAX_TORSION), dtype=float)
-        self.torsion = np.zeros(
-            (self.n_frame, self.n_residue, MAX_TORSION, MAX_PERIODIC), dtype=float
-        )
-        self.R_alt = self.R.copy()
+        if not bb_only:
+            self.torsion_mask = np.zeros((self.n_residue, MAX_TORSION), dtype=float)
+            self.torsion = np.zeros(
+                (self.n_frame, self.n_residue, MAX_TORSION, MAX_PERIODIC), dtype=float
+            )
+            self.R_alt = self.R.copy()
         for i_res in range(self.n_residue):
             mask, opr_s = self.get_backbone_orientation(i_res)
             self.bb_mask[i_res] = mask
             self.bb[:, i_res, :3, :] = opr_s[0]  # rotation matrix
             self.bb[:, i_res, 3, :] = opr_s[1]  # translation vector
+            if bb_only:
+                continue
             #
             mask, tor_s = self.get_torsion_angles(i_res)
             self.torsion_mask[i_res, :] = mask

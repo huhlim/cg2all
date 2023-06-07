@@ -221,6 +221,7 @@ class BaseClass(PDB):
 
 
 class ResidueBasedModel(BaseClass):
+    NAME="ResidueBasedModel"
     def __init__(self, pdb_fn, dcd_fn=None, **kwarg):
         super().__init__(pdb_fn, dcd_fn, **kwarg)
 
@@ -235,6 +236,7 @@ class ResidueBasedModel(BaseClass):
 
 
 class CalphaBasedModel(BaseClass):
+    NAME="CalphaBasedModel"
     def __init__(self, pdb_fn, dcd_fn=None, **kwarg):
         super().__init__(pdb_fn, dcd_fn, **kwarg)
 
@@ -246,6 +248,7 @@ class CalphaBasedModel(BaseClass):
 
 
 class CalphaCMModel(BaseClass):
+    NAME="CalphaCMModel"
     NAME_BEAD = ["CA", "CM"]
     MAX_BEAD = 2
 
@@ -292,6 +295,7 @@ class CalphaCMModel(BaseClass):
 
 
 class Martini(BaseClass):
+    NAME="Martini"
     NAME_BEAD = ["BB", "SC1", "SC2", "SC3", "SC4"]
     MAX_BEAD = 5
 
@@ -346,6 +350,7 @@ class Martini(BaseClass):
 
 
 class PRIMO(BaseClass):
+    NAME="PRIMO"
     NAME_BEAD = ["CA", "N", "CO", "SC1", "SC2", "SC3", "SC4", "SC5"]
     WRITE_BEAD = ["N", "CA", "CO", "SC1", "SC2", "SC3", "SC4", "SC5"]
     MAX_BEAD = 8
@@ -411,6 +416,7 @@ class PRIMO(BaseClass):
 
 
 class BackboneModel(BaseClass):
+    NAME="BackboneModel"
     NAME_BEAD = ["CA", "N", "C"]
     WRITE_BEAD = ["N", "CA", "C"]
     MAX_BEAD = 3
@@ -464,6 +470,7 @@ class BackboneModel(BaseClass):
 
 
 class MainchainModel(BackboneModel):
+    NAME="MainchainModel"
     NAME_BEAD = ["CA", "N", "C", "O"]
     WRITE_BEAD = ["N", "CA", "C", "O"]
     MAX_BEAD = 4

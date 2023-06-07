@@ -267,6 +267,7 @@ class PredictionData(Dataset):
         self_loop=False,
         chain_break_cutoff=1.0,
         is_all=False,
+        fix_atom=False,
         dtype=DTYPE,
     ):
         super().__init__()
@@ -282,6 +283,7 @@ class PredictionData(Dataset):
         self.dtype = dtype
         self.chain_break_cutoff = chain_break_cutoff
         self.is_all = is_all
+        self.fix_atom = fix_atom
         #
         if self.dcd_fn is None:
             self.n_frame = 1
@@ -339,6 +341,16 @@ class PredictionData(Dataset):
         data.ndata["residue_type"] = torch.as_tensor(cg.residue_index, dtype=torch.long)
         data.ndata["continuous"] = torch.as_tensor(cg.continuous[0], dtype=self.dtype)
         data.ndata["output_atom_mask"] = torch.as_tensor(cg.atom_mask, dtype=self.dtype)
+        #
+        if self.fix_atom:
+            if self.cg_model.NAME in ["MainchainModel", "BackboneModel"]:
+                atom_order = [cg.WRITE_BEAD.index(atom_name) for atom_name in cg.NAME_BEAD]
+                cg.atom_mask_pdb = cg.atom_mask_cg[:, atom_order]
+                cg.R = cg.R_cg[:, :, atom_order]
+                cg.get_structure_information(bb_only=True)
+                data.ndata["correct_bb"] = torch.as_tensor(cg.bb[0], dtype=self.dtype)
+                data.ndata["output_xyz"] = torch.as_tensor(cg.R[0], dtype=self.dtype)
+                data.ndata["pdb_atom_mask"] = torch.as_tensor(cg.atom_mask_pdb, dtype=self.dtype)
         #
         ssbond_index = torch.full((data.num_nodes(),), -1, dtype=torch.long)
         for cys_i, cys_j in cg.ssbond_s:
@@ -399,9 +411,10 @@ def create_topology_from_data(data: dgl.DGLGraph, write_native: bool = False) ->
     atom_index = []
     for i_res in range(data.ndata["residue_type"].size(0)):
         chain_index = data.ndata["chain_index"][i_res]
+        continuous = data.ndata["continuous"][i_res].cpu().detach().item()
+        #
         resNum = data.ndata["resSeq"][i_res].cpu().detach().item()
         resSeqIns = data.ndata["resSeqIns"][i_res].cpu().detach().item()
-        continuous = data.ndata["continuous"][i_res].cpu().detach().item()
         if resSeqIns == 0:
             resSeq = resNum
         else:
@@ -486,70 +499,3 @@ def create_trajectory_from_batch(
         traj = mdtraj.Trajectory(xyz=xyz, topology=top)
         traj_s.append(traj)
     return traj_s, ssbond_s
-
-
-def to_pt():
-    base_dir = BASE / "pdb.6k"
-    pdblist = "set/targets.pdb.6k"
-    #
-    cg_model = libcg.Martini
-    topology_map = read_coarse_grained_topology("martini")
-    #
-    augment = ""
-    use_pt = None  # "Martini"
-    #
-    train_set = PDBset(
-        base_dir,
-        pdblist,
-        cg_model,
-        topology_map=topology_map,
-        use_pt=use_pt,
-        augment=augment,
-    )
-    #
-    train_loader = dgl.dataloading.GraphDataLoader(
-        train_set, batch_size=8, shuffle=False, num_workers=16
-    )
-    for _ in train_loader:
-        pass
-
-
-def test():
-    return
-    base_dir = BASE / "pdb.6k"
-    pdblist = "set/targets.pdb.6k"
-    #
-    cg_model = libcg.Martini
-    topology_map = read_coarse_grained_topology("martini")
-    #
-    augment = ""
-    use_pt = None  # "Martini"
-    #
-    train_set = PDBset(
-        base_dir,
-        pdblist,
-        cg_model,
-        topology_map=topology_map,
-        use_pt=use_pt,
-        augment=augment,
-    )
-    batch = train_set[0]
-    R = torch.zeros((batch.num_nodes(), 24, 3))
-    traj_s, ssbond_s = create_trajectory_from_batch(batch, R, write_native=True)
-    traj_s[0].save("test.pdb")
-
-
-if __name__ == "__main__":
-    m = MinimizableData("pdb.processed/1ab1_A.pdb", libcg.CalphaBasedModel)
-    for i in range(1000):
-        batch = m.convert_to_batch(m.r_cg)
-        #
-        optimizer = torch.optim.Adam([m.r_cg], lr=0.001)
-        optimizer.zero_grad()
-        #
-        loss = 0.0
-        loss = loss + torch.sum(batch.ndata["node_feat_0"])
-        loss = loss + torch.sum(batch.ndata["node_feat_1"])
-        print(loss.item())
-        loss.backward()
-        optimizer.step()

@@ -56,6 +56,7 @@ def main():
     )
     arg.add_argument("--chain-break-cutoff", dest="chain_break_cutoff", default=10.0, type=float)
     arg.add_argument("-a", "--all", "--is_all", dest="is_all", default=False, action="store_true")
+    arg.add_argument("--fix", "--fix_atom", dest="fix_atom", default=False, action="store_true")
     arg.add_argument("--ckpt", dest="ckpt_fn", default=None)
     arg.add_argument("--time", dest="time_json", default=None)
     arg.add_argument("--device", dest="device", default=None)
@@ -93,10 +94,14 @@ def main():
             elif arg.cg_model in ["MC", "mc", "mainchain", "Mainchain", "MainchainModel"]:
                 model_type = "MainchainModel"
             # fmt:on
-            arg.ckpt_fn = MODEL_HOME / f"{model_type}.ckpt"
+            #
+            if arg.fix_atom:
+                arg.ckpt_fn = MODEL_HOME / f"{model_type}-FIX.ckpt"
+            else:
+                arg.ckpt_fn = MODEL_HOME / f"{model_type}.ckpt"
         #
         if not arg.ckpt_fn.exists():
-            cg2all.lib.libmodel.download_ckpt_file(model_type, arg.ckpt_fn)
+            cg2all.lib.libmodel.download_ckpt_file(model_type, arg.ckpt_fn, fix_atom=arg.fix_atom)
     #
     ckpt = torch.load(arg.ckpt_fn, map_location=device)
     config = ckpt["hyper_parameters"]
@@ -123,7 +128,7 @@ def main():
     else:
         topology_map = None
     #
-    config = cg2all.lib.libmodel.set_model_config(config, cg_model)
+    config = cg2all.lib.libmodel.set_model_config(config, cg_model, flattened=False)
     model = cg2all.lib.libmodel.Model(config, cg_model, compute_loss=False)
     #
     state_dict = ckpt["state_dict"]
