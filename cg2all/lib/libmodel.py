@@ -621,7 +621,7 @@ def download_ckpt_file(_model_type, ckpt_fn, fix_atom=False):
 
         #
         sys.stdout.write(f"Downloading from Zenodo ... {ckpt_fn}\n")
-        url = f"https://zenodo.org/record/7742950/files/{ckpt_fn.name}"
+        url = f"https://zenodo.org/record/8015059/files/{ckpt_fn.name}"
         if not ckpt_fn.parent.exists():
             ckpt_fn.parent.mkdir()
         with open(ckpt_fn, "wb") as fout:
