@@ -149,6 +149,7 @@ def main():
         radius=config.globals.radius,
         chain_break_cutoff=0.1 * arg.chain_break_cutoff,
         is_all=arg.is_all,
+        fix_atom=config.globals.fix_atom,
     )
     if arg.in_dcd_fn is not None:
         unitcell_lengths = input_s.cg.unitcell_lengths

@@ -38,6 +38,7 @@ def convert_cg2all(
     model_type="CalphaBasedModel",
     in_dcd_fn=None,
     ckpt_fn=None,
+    fix_atom=False,
     device=None,
     n_proc=int(os.getenv("OMP_NUM_THREADS", 1)),
 ):
@@ -49,7 +50,10 @@ def convert_cg2all(
 
     # load model ckpt file
     if ckpt_fn is None:
-        ckpt_fn = MODEL_HOME / f"{model_type}.ckpt"
+        if fix_atom:
+            ckpt_fn = MODEL_HOME / f"{model_type}-FIX.ckpt"
+        else:
+            ckpt_fn = MODEL_HOME / f"{model_type}.ckpt"
     ckpt = torch.load(ckpt_fn, map_location=device)
     config = ckpt["hyper_parameters"]
 
@@ -81,7 +85,9 @@ def convert_cg2all(
     model.eval()
 
     # prepare input data
-    input_s = PredictionData(in_pdb_fn, cg_model, dcd_fn=in_dcd_fn, radius=config.globals.radius)
+    input_s = PredictionData(
+        in_pdb_fn, cg_model, dcd_fn=in_dcd_fn, radius=config.globals.radius, fix_atom=config.globals.fix_atom
+    )
     if in_dcd_fn is not None:
         unitcell_lengths = input_s.cg.unitcell_lengths
         unitcell_angles = input_s.cg.unitcell_angles

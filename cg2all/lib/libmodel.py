@@ -78,6 +78,7 @@ STRUCTURE_MODULE["low_memory"] = True
 STRUCTURE_MODULE["num_graph_layers"] = 6
 STRUCTURE_MODULE["num_linear_layers"] = 6
 STRUCTURE_MODULE["num_heads"] = 8  # number of attention heads
+STRUCTURE_MODULE["mid_dim"] = 32  # # of neurons in radial_profile
 STRUCTURE_MODULE["norm"] = [
     True,
     True,
@@ -297,6 +298,7 @@ class InteractionModule(nn.Module):
             num_heads=config.num_heads,
             channels_div=config.channels_div,
             fiber_edge=Fiber(config.fiber_edge or {}),
+            mid_dim=config.mid_dim,
             norm=config.norm[0],
             use_layer_norm=config.norm[1],
             nonlinearity=nonlinearity,
