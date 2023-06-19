@@ -15,7 +15,6 @@ A Google Colab notebook is available for tasks:
 A Google Colab notebook is available for local optimization of a protein model structure against a cryo-EM density map using __cryo_em_minimizer.py__
 
 ## Installation
-
 These steps will install Python libraries including [cg2all (this repository)](https://github.com/huhlim/cg2all), [a modified MDTraj](https://github.com/huhlim/mdtraj), [a modified SE3Transformer](https://github.com/huhlim/SE3Transformer), and other dependent libraries. The installation steps also place executables `convert_cg2all` and `convert_all2cg` in your python binary directory.
 
 This package is tested on Linux (CentOS) and MacOS (Apple Silicon, M1).
@@ -53,7 +52,7 @@ convert a coarse-grained protein structure to all-atom model
 ```bash
 usage: convert_cg2all [-h] -p IN_PDB_FN [-d IN_DCD_FN] -o OUT_FN [-opdb OUTPDB_FN]
                       [--cg {supported_cg_models}] [--chain-break-cutoff CHAIN_BREAK_CUTOFF] [-a]
-                      [--ckpt CKPT_FN] [--time TIME_JSON] [--device DEVICE] [--batch BATCH_SIZE] [--proc N_PROC]
+                      [--fix] [--ckpt CKPT_FN] [--time TIME_JSON] [--device DEVICE] [--batch BATCH_SIZE] [--proc N_PROC]
 
 options:
   -h, --help            show this help message and exit
@@ -64,6 +63,7 @@ options:
   --cg {supported_cg_models}
   --chain-break-cutoff CHAIN_BREAK_CUTOFF
   -a, --all, --is_all
+  --fix, --fix_atom
   --ckpt CKPT_FN
   --time TIME_JSON
   --device DEVICE
@@ -84,6 +84,7 @@ options:
   - Martini: [Martini](http://cgmartini.nl/) model
   - PRIMO: [PRIMO](http://dx.doi.org/10.1002/prot.22645) model
 * --chain-break-cutoff: The CA-CA distance cutoff that determines chain breaks. (default=10 Angstroms)
+* --fix/--fix_atom: preserve coordinates in the input CG model. For example, CA coordinates in a CA-trace model will be kept in its cg2all output model.
 * --ckpt: Input PyTorch ckpt file (optional). If a ckpt file is given, it will override "--cg" option.
 * --time: Output JSON file for recording timing. (optional)
 * --device: Specify a device to run the model. (optional) You can choose "cpu" or "cuda", or the script will detect one automatically. </br>
@@ -100,7 +101,10 @@ Conversion of a DCD trajectory file
 ```bash
 convert_cg2all -p tests/1jni.calpha.pdb -d tests/1jni.calpha.dcd -o tests/1jni.calpha.all.dcd --cg CalphaBasedModel
 ```
-
+Conversion of a PDB file using a ckpt file
+```bash
+convert_cg2all -p tests/1ab1_A.calpha.pdb -o tests/1ab1_A.calpha.all.pdb --ckpt CalphaBasedModel-104.ckpt
+```
 <hr/>
 
 ### convert_all2cg
