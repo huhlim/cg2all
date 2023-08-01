@@ -37,7 +37,7 @@ class PDBset(Dataset):
     def __init__(
         self,
         basedir: str,
-        pdblist: List[str],
+        pdblist: str,
         cg_model,
         topology_map=None,
         radius=1.0,
@@ -143,7 +143,7 @@ class PDBset(Dataset):
         if self.perturb_pos > 0.0:
             dx = torch.randn_like(pos) * self.perturb_pos
             pos = pos + dx
-        geom_s = cg.get_geometry(pos, cg.atom_mask_cg, cg.continuous[0])
+        geom_s = cg.get_geometry(pos, cg.atom_mask_cg[valid_residue], cg.continuous[0][valid_residue])
         #
         node_feat = cg.geom_to_feature(geom_s, cg.continuous, dtype=self.dtype)
         data = dgl.radius_graph(pos[:, 0], self.radius, self_loop=self.self_loop)
@@ -323,7 +323,7 @@ class PredictionData(Dataset):
         #
         valid_residue = cg.atom_mask_cg[:, 0] > 0.0
         pos = r_cg[valid_residue, :]
-        geom_s = cg.get_geometry(pos, cg.atom_mask_cg, cg.continuous[0])
+        geom_s = cg.get_geometry(pos, cg.atom_mask_cg[valid_residue], cg.continuous[0][valid_residue])
         #
         node_feat = cg.geom_to_feature(geom_s, cg.continuous, dtype=self.dtype)
         data = dgl.radius_graph(pos[:, 0], self.radius, self_loop=self.self_loop)

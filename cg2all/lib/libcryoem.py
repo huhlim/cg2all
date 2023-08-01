@@ -33,8 +33,6 @@ from libdata import resSeq_to_number
 from libloss import loss_f_bonded_energy_aux as loss_f_bonded_energy_aa_aux
 from libloss import CoarseGrainedGeometryEnergy, loss_f_torsion_energy
 
-# from libmd import loss_f_nonbonded, BackboneTorsionEnergy
-
 
 def trilinear_interpolation(
     r: torch.Tensor, rho: torch.Tensor, xyz_size: torch.Tensor
@@ -287,7 +285,7 @@ class MinimizableData(object):
         data.ndata["resSeqIns"] = torch.as_tensor(resSeqIns, dtype=torch.long)
         data.ndata["residue_type"] = torch.as_tensor(self.cg.residue_index, dtype=torch.long)
         data.ndata["continuous"] = torch.as_tensor(self.cg.continuous[0], dtype=self.dtype)
-        data.ndata["output_atom_mask"] = torch.as_tensor(self.cg.atom_mask, dtype=self.dtype)  #
+        data.ndata["output_atom_mask"] = torch.as_tensor(self.cg.atom_mask, dtype=self.dtype)  
         #
         ssbond_index = torch.full((data.num_nodes(),), -1, dtype=torch.long)
         for cys_i, cys_j in self.cg.ssbond_s:

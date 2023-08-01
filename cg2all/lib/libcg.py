@@ -62,6 +62,7 @@ class BaseClass(PDB):
         self.R_cg = np.zeros((self.n_frame, self.n_residue, self.MAX_BEAD, 3))
         self.atom_mask = np.zeros((self.n_residue, MAX_ATOM), dtype=float)
         self.atom_mask_cg = np.zeros((self.n_residue, self.MAX_BEAD), dtype=float)
+        self.bfactors_cg = np.zeros((self.n_frame, self.n_residue, self.MAX_BEAD), dtype=float)
         #
         for residue in self.top.residues:
             i_res = residue.index
@@ -87,6 +88,7 @@ class BaseClass(PDB):
                 i_atm = self.NAME_BEAD.index(atom.name)
                 self.R_cg[:, i_res, i_atm] = self.traj.xyz[:, atom.index]
                 self.atom_mask_cg[i_res, i_atm] = 1.0
+                self.bfactors_cg[:, i_res, i_atm] = self.traj.bfactors[:, atom.index]
             #
             if i_res in ssbond_s:
                 HG1_index = ref_res.atom_s.index("HG1")
@@ -221,7 +223,8 @@ class BaseClass(PDB):
 
 
 class ResidueBasedModel(BaseClass):
-    NAME="ResidueBasedModel"
+    NAME = "ResidueBasedModel"
+
     def __init__(self, pdb_fn, dcd_fn=None, **kwarg):
         super().__init__(pdb_fn, dcd_fn, **kwarg)
 
@@ -233,10 +236,12 @@ class ResidueBasedModel(BaseClass):
         #
         self.R_cg = R_cg[..., None, :]
         self.atom_mask_cg = self.atom_mask_pdb[:, (ATOM_INDEX_CA,)]
+        self.bfactors_cg = self.bfactors[:, :, (ATOM_INDEX_CA,)]
 
 
 class CalphaBasedModel(BaseClass):
-    NAME="CalphaBasedModel"
+    NAME = "CalphaBasedModel"
+
     def __init__(self, pdb_fn, dcd_fn=None, **kwarg):
         super().__init__(pdb_fn, dcd_fn, **kwarg)
 
@@ -245,10 +250,11 @@ class CalphaBasedModel(BaseClass):
         #
         self.R_cg = self.R[:, :, (ATOM_INDEX_CA,), :]
         self.atom_mask_cg = self.atom_mask_pdb[:, (ATOM_INDEX_CA,)]
+        self.bfactors_cg = self.bfactors[:, :, (ATOM_INDEX_CA,)]
 
 
 class CalphaCMModel(BaseClass):
-    NAME="CalphaCMModel"
+    NAME = "CalphaCMModel"
     NAME_BEAD = ["CA", "CM"]
     MAX_BEAD = 2
 
@@ -295,7 +301,7 @@ class CalphaCMModel(BaseClass):
 
 
 class Martini(BaseClass):
-    NAME="Martini"
+    NAME = "Martini"
     NAME_BEAD = ["BB", "SC1", "SC2", "SC3", "SC4"]
     MAX_BEAD = 5
 
@@ -350,7 +356,7 @@ class Martini(BaseClass):
 
 
 class PRIMO(BaseClass):
-    NAME="PRIMO"
+    NAME = "PRIMO"
     NAME_BEAD = ["CA", "N", "CO", "SC1", "SC2", "SC3", "SC4", "SC5"]
     WRITE_BEAD = ["N", "CA", "CO", "SC1", "SC2", "SC3", "SC4", "SC5"]
     MAX_BEAD = 8
@@ -416,7 +422,7 @@ class PRIMO(BaseClass):
 
 
 class BackboneModel(BaseClass):
-    NAME="BackboneModel"
+    NAME = "BackboneModel"
     NAME_BEAD = ["CA", "N", "C"]
     WRITE_BEAD = ["N", "CA", "C"]
     MAX_BEAD = 3
@@ -470,7 +476,7 @@ class BackboneModel(BaseClass):
 
 
 class MainchainModel(BackboneModel):
-    NAME="MainchainModel"
+    NAME = "MainchainModel"
     NAME_BEAD = ["CA", "N", "C", "O"]
     WRITE_BEAD = ["N", "CA", "C", "O"]
     MAX_BEAD = 4

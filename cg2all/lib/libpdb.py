@@ -53,7 +53,6 @@ class PDB(object):
         self.n_chain = self.top.n_chains
         self.n_residue = self.top.n_residues
         self.chain_index = np.array([r.chain.index for r in self.top.residues], dtype=int)
-        # self.resSeq = np.array([r.resSeq for r in self.top.residues])
         self.resSeq = [r.resSeq for r in self.top.residues]
         self.residue_name = []
         self.residue_index = np.zeros(self.n_residue, dtype=int)
@@ -71,7 +70,7 @@ class PDB(object):
             return
         #
         self.to_atom()
-        self.get_continuity()
+        self.get_continuity(chain_break_cutoff=kwarg.get("chain_break_cutoff", 1.0))
         #
         if not check_validity:
             return
@@ -209,19 +208,21 @@ class PDB(object):
         self.bfactors = np.clip(self.bfactors, 0.0, 100.0)
 
     # get continuity information, whether it has a previous residue
-    def get_continuity(self):
+    def get_continuity(self, chain_break_cutoff=1.0):
         self.continuous = np.zeros((2, self.n_residue), dtype=bool)  # prev / next
         #
         # different chains
         same_chain = self.chain_index[1:] == self.chain_index[:-1]
         self.continuous[0, 1:] = same_chain
         self.continuous[1, :-1] = same_chain
-
+        #
         # chain breaks
-        if BOND_BREAK > 0.0:
+        if chain_break_cutoff >= 1.0:
+            chain_break_cutoff = BOND_BREAK
+        if chain_break_cutoff > 0.0:
             dr = self.R[:, 1:, ATOM_INDEX_N] - self.R[:, :-1, ATOM_INDEX_C]
             d = v_size(dr).mean(axis=0)
-            chain_breaks = d > BOND_BREAK
+            chain_breaks = d > chain_break_cutoff
             self.continuous[0, 1:][chain_breaks] = False
             self.continuous[1, :-1][chain_breaks] = False
         #
