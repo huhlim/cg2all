@@ -150,11 +150,15 @@ def main():
         chain_break_cutoff=0.1 * arg.chain_break_cutoff,
         is_all=arg.is_all,
         fix_atom=config.globals.fix_atom,
+        batch_size=arg.batch_size,
     )
+    #
     if arg.in_dcd_fn is not None:
+        n_frame0 = input_s.n_frame0
         unitcell_lengths = input_s.cg.unitcell_lengths
         unitcell_angles = input_s.cg.unitcell_angles
-    if len(input_s) > 1 and arg.n_proc > 1:
+    #
+    if len(input_s) > 1 and (arg.n_proc > 1 or arg.batch_size > 1):
         input_s = dgl.dataloading.GraphDataLoader(
             input_s, batch_size=arg.batch_size, num_workers=arg.n_proc, shuffle=False
         )
@@ -197,7 +201,7 @@ def main():
         xyz = np.array(xyz)
         if arg.batch_size > 1:
             batch = dgl.unbatch(batch)[0]
-            xyz = xyz.reshape((xyz.shape[0] * arg.batch_size, -1, 3))
+            xyz = xyz.reshape((n_frame0, -1, 3))
         top, atom_index = create_topology_from_data(batch)
         xyz = xyz[:, atom_index]
         traj = mdtraj.Trajectory(

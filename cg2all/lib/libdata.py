@@ -143,7 +143,9 @@ class PDBset(Dataset):
         if self.perturb_pos > 0.0:
             dx = torch.randn_like(pos) * self.perturb_pos
             pos = pos + dx
-        geom_s = cg.get_geometry(pos, cg.atom_mask_cg[valid_residue], cg.continuous[0][valid_residue])
+        geom_s = cg.get_geometry(
+            pos, cg.atom_mask_cg[valid_residue], cg.continuous[0][valid_residue]
+        )
         #
         node_feat = cg.geom_to_feature(geom_s, cg.continuous, dtype=self.dtype)
         data = dgl.radius_graph(pos[:, 0], self.radius, self_loop=self.self_loop)
@@ -268,6 +270,7 @@ class PredictionData(Dataset):
         chain_break_cutoff=1.0,
         is_all=False,
         fix_atom=False,
+        batch_size=1,
         dtype=DTYPE,
     ):
         super().__init__()
@@ -286,10 +289,15 @@ class PredictionData(Dataset):
         self.fix_atom = fix_atom
         #
         if self.dcd_fn is None:
+            self.n_frame0 = 1
             self.n_frame = 1
         else:
             self.cg = self.pdb_to_cg(self.pdb_fn, dcd_fn=self.dcd_fn)
-            self.n_frame = self.cg.n_frame
+            self.n_frame0 = self.cg.n_frame
+            if self.n_frame0 % batch_size == 0:
+                self.n_frame = self.n_frame0
+            else:
+                self.n_frame = self.n_frame0 + (batch_size - self.n_frame0 % batch_size)
 
     def __len__(self):
         return self.n_frame
@@ -312,6 +320,9 @@ class PredictionData(Dataset):
             )
 
     def __getitem__(self, index):
+        if index >= self.n_frame0:
+            return dgl.graph([])
+        #
         if self.dcd_fn is None:
             cg = self.pdb_to_cg(self.pdb_fn)
             R_cg = cg.R_cg[0]
@@ -323,7 +334,9 @@ class PredictionData(Dataset):
         #
         valid_residue = cg.atom_mask_cg[:, 0] > 0.0
         pos = r_cg[valid_residue, :]
-        geom_s = cg.get_geometry(pos, cg.atom_mask_cg[valid_residue], cg.continuous[0][valid_residue])
+        geom_s = cg.get_geometry(
+            pos, cg.atom_mask_cg[valid_residue], cg.continuous[0][valid_residue]
+        )
         #
         node_feat = cg.geom_to_feature(geom_s, cg.continuous, dtype=self.dtype)
         data = dgl.radius_graph(pos[:, 0], self.radius, self_loop=self.self_loop)

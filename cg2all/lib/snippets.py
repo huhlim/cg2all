@@ -86,7 +86,11 @@ def convert_cg2all(
 
     # prepare input data
     input_s = PredictionData(
-        in_pdb_fn, cg_model, dcd_fn=in_dcd_fn, radius=config.globals.radius, fix_atom=config.globals.fix_atom
+        in_pdb_fn,
+        cg_model,
+        dcd_fn=in_dcd_fn,
+        radius=config.globals.radius,
+        fix_atom=config.globals.fix_atom,
     )
     if in_dcd_fn is not None:
         unitcell_lengths = input_s.cg.unitcell_lengths
