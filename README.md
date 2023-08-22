@@ -168,5 +168,9 @@ options:
 ./cg2all/script/cryo_em_minimizer.py -p tests/3isr.af2.pdb -m tests/3isr_5.mrc -o 3isr_5+3isr.af2 --all
 ```
 
+## Datasets
+The training/validation/test sets are available at [zenodo](https://zenodo.org/record/8273739).
+
+
 ## Reference
 Lim Heo & Michael Feig, "One particle per residue is sufficient to describe all-atom protein structures", _bioRxiv_ (**2023**). [Link](https://www.biorxiv.org/content/10.1101/2023.05.22.541652v1)
