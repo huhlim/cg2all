@@ -72,7 +72,7 @@ def convert_cg2all(
         cg_model = libcg.BackboneModel
     elif config["cg_model"] == "MainchainModel":
         cg_model = libcg.MainchainModel
-    config = libmodel.set_model_config(config, cg_model, flatten=False)
+    config = libmodel.set_model_config(config, cg_model, flattened=False)
     model = libmodel.Model(config, cg_model, compute_loss=False)
 
     # update state_dict
