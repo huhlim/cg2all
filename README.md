@@ -78,7 +78,9 @@ options:
 * --cg: Coarse-grained representation to use (optional, default=CalphaBasedModel).
   - CalphaBasedModel: CA-trace (atom names should be "CA")
   - ResidueBasedModel: Residue center-of-mass (atom names should be "CA")
+  - SidechainModel: Sidechain center-of-mass (atom names should be "SC")
   - CalphaCMModel: CA-trace + Residue center-of-mass (atom names should be "CA" and "CM")
+  - CalphaSCModel: CA-trace + Sidechain center-of-mass (atom names should be "CA" and "SC")
   - BackboneModel: Model only with backbone atoms (N, CA, C)
   - MainchainModel: Model only with mainchain atoms (N, CA, C, O)
   - Martini: [Martini](http://cgmartini.nl/) model
@@ -126,7 +128,9 @@ options:
 * --cg: Coarse-grained representation to use (optional, default=CalphaBasedModel).
   - CalphaBasedModel: CA-trace (atom names should be "CA")
   - ResidueBasedModel: Residue center-of-mass (atom names should be "CA")
+  - SidechainModel: Sidechain center-of-mass (atom names should be "SC")
   - CalphaCMModel: CA-trace + Residue center-of-mass (atom names should be "CA" and "CM")
+  - CalphaSCModel: CA-trace + Sidechain center-of-mass (atom names should be "CA" and "SC")
   - BackboneModel: Model only with backbone atoms (N, CA, C)
   - MainchainModel: Model only with mainchain atoms (N, CA, C, O)
   - Martini: [Martini](http://cgmartini.nl/) model
