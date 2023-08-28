@@ -30,6 +30,9 @@ def main():
                 "CACM", "cacm", "CalphaCM", "CalphaCMModel",\
                 "BB", "bb", "backbone", "Backbone", "BackboneModel", \
                 "MC", "mc", "mainchain", "Mainchain", "MainchainModel",
+                "CACM", "cacm", "CalphaCM", "CalphaCMModel",
+                "CASC", "casc", "CalphaSC", "CalphaSCModel",
+                "SC", "sc", "sidechain", "Sidechain",
                 ]
         # fmt:on
     )
@@ -49,6 +52,10 @@ def main():
         )
     elif arg.cg_model in ["CACM", "cacm", "CalphaCM", "CalphaCMModel"]:
         cg_model = cg2all.lib.libcg.CalphaCMModel
+    elif arg.cg_model in ["CASC", "casc", "CalphaSC", "CalphaSCModel"]:
+        cg_model = cg2all.lib.libcg.CalphaSCModel
+    elif arg.cg_model in ["SC", "sc", "sidechain", "SidechainModel"]:
+        cg_model = cg2all.lib.libcg.SidechainModel
     elif arg.cg_model in ["BB", "bb", "backbone", "Backbone", "BackboneModel"]:
         cg_model = cg2all.lib.libcg.BackboneModel
     elif arg.cg_model in ["MC", "mc", "mainchain", "Mainchain", "MainchainModel"]:

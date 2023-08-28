@@ -51,6 +51,8 @@ def main():
                 "BB", "bb", "backbone", "Backbone", "BackboneModel", \
                 "MC", "mc", "mainchain", "Mainchain", "MainchainModel",
                 "CACM", "cacm", "CalphaCM", "CalphaCMModel",
+                "CASC", "casc", "CalphaSC", "CalphaSCModel",
+                "SC", "sc", "sidechain", "SidechainModel",
                 ]
         # fmt:on
     )
@@ -89,6 +91,10 @@ def main():
                 model_type = "PRIMO"
             elif arg.cg_model in ["CACM", "cacm", "CalphaCM", "CalphaCMModel"]:
                 model_type = "CalphaCMModel"
+            elif arg.cg_model in ["CASC", "casc", "CalphaSC", "CalphaSCModel"]:
+                model_type = "CalphaSCModel"
+            elif arg.cg_model in ["SC", "sc", "sidechain", "SidechainModel"]:
+                model_type = "SidechainModel"
             elif arg.cg_model in ["BB", "bb", "backbone", "Backbone", "BackboneModel"]:
                 model_type = "BackboneModel"
             elif arg.cg_model in ["MC", "mc", "mainchain", "Mainchain", "MainchainModel"]:
@@ -118,6 +124,10 @@ def main():
         cg_model = cg2all.lib.libcg.PRIMO
     elif config["cg_model"] == "CalphaCMModel":
         cg_model = cg2all.lib.libcg.CalphaCMModel
+    elif config["cg_model"] == "CalphaSCModel":
+        cg_model = cg2all.lib.libcg.CalphaSCModel
+    elif config["cg_model"] == "SidechainModel":
+        cg_model = cg2all.lib.libcg.SidechainModel
     elif config["cg_model"] == "BackboneModel":
         cg_model = cg2all.lib.libcg.BackboneModel
     elif config["cg_model"] == "MainchainModel":

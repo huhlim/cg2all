@@ -26,6 +26,7 @@ from residue_constants import (
     ATOM_INDEX_C,
     ATOM_INDEX_O,
     read_coarse_grained_topology,
+    rigid_groups_dep,
 )
 
 
@@ -298,6 +299,134 @@ class CalphaCMModel(BaseClass):
         mass_weighted_R = self.R * self.atomic_mass[None, ..., None]
         R_cm = mass_weighted_R.sum(axis=-2) / self.atomic_mass.sum(axis=-1)[None, ..., None]
         self.R_cg[:, :, 1] = R_cm
+
+
+class CalphaSCModel(BaseClass):
+    NAME = "CalphaSCModel"
+    NAME_BEAD = ["CA", "SC"]
+    MAX_BEAD = 2
+
+    n_node_scalar = 17
+    n_node_vector = 5
+    n_edge_scalar = 3
+    n_edge_vector = 0
+
+    def __init__(self, pdb_fn, dcd_fn=None, **kwarg):
+        super().__init__(pdb_fn, dcd_fn, **kwarg)
+
+    def create_top_cg(self):
+        top = mdtraj.Topology()
+        #
+        serial = 0
+        mask_sc = []
+        for chain0 in self.top.chains:
+            chain = top.add_chain()
+            #
+            for residue0 in chain0.residues:
+                residue = top.add_residue(
+                    residue0.name, chain, residue0.resSeq, residue0.segment_id
+                )
+                #
+                index = AMINO_ACID_s.index(residue0.name)
+                mask = rigid_groups_dep[index].copy()
+                mask = (mask > 3) & (mask != 8)
+                if residue0.name != "GLY":
+                    atom_index_CB = residue_s[residue0.name].atom_s.index("CB")
+                    mask[atom_index_CB] = True
+                mask_sc.append(mask)
+                #
+                atom_s = []
+                for atom_name in self.NAME_BEAD:
+                    if residue0.name == "GLY" and atom_name != "CA":
+                        continue
+                    serial += 1
+                    element = mdtraj.core.element.Element.getBySymbol("C")
+                    atom = top.add_atom(atom_name, element, residue, serial=serial)
+                    atom_s.append(atom)
+        return top, np.array(mask_sc, dtype=bool)
+
+    def convert_to_cg(self, **kwarg):
+        self.top_cg, mask_sc = self.create_top_cg()
+        #
+        self.R_cg = np.zeros((self.n_frame, self.n_residue, self.MAX_BEAD, 3))
+        self.atom_mask_cg = np.zeros((self.n_residue, self.MAX_BEAD), dtype=float)
+        #
+        self.R_cg[:, :, 0] = self.R[:, :, ATOM_INDEX_CA, :]
+        self.atom_mask_cg[:, 0] = self.atom_mask_pdb[:, ATOM_INDEX_CA]
+        #
+        for i_res in range(self.n_residue):
+            mask = mask_sc[i_res]
+            mass = self.atomic_mass[i_res, mask]
+            if mass.sum() < EPS:
+                continue
+            mass_weighted_R = self.R[:, i_res, mask] * mass[None, :, None]
+            R_cm = mass_weighted_R.sum(axis=1) / mass.sum()
+            self.R_cg[:, i_res, 1] = R_cm
+            self.atom_mask_cg[i_res, 1] = 1.0
+
+
+class SidechainModel(BaseClass):
+    NAME = "SidechainModel"
+    NAME_BEAD = ["SC"]
+    MAX_BEAD = 1
+
+    n_node_scalar = 17
+    n_node_vector = 4
+    n_edge_scalar = 3
+    n_edge_vector = 0
+
+    def __init__(self, pdb_fn, dcd_fn=None, **kwarg):
+        super().__init__(pdb_fn, dcd_fn, **kwarg)
+
+    def create_top_cg(self):
+        top = mdtraj.Topology()
+        #
+        serial = 0
+        mask_sc = []
+        for chain0 in self.top.chains:
+            chain = top.add_chain()
+            #
+            for residue0 in chain0.residues:
+                residue = top.add_residue(
+                    residue0.name, chain, residue0.resSeq, residue0.segment_id
+                )
+                #
+                index = AMINO_ACID_s.index(residue0.name)
+                mask = rigid_groups_dep[index].copy()
+                mask = (mask > 3) & (mask != 8)
+                if residue0.name != "GLY":
+                    atom_index_CB = residue_s[residue0.name].atom_s.index("CB")
+                    mask[atom_index_CB] = True
+                mask_sc.append(mask)
+                #
+                atom_s = []
+                for atom_name in self.NAME_BEAD:
+                    serial += 1
+                    element = mdtraj.core.element.Element.getBySymbol("C")
+                    atom = top.add_atom(atom_name, element, residue, serial=serial)
+                    atom_s.append(atom)
+        return top, np.array(mask_sc, dtype=bool)
+
+    def convert_to_cg(self, **kwarg):
+        self.top_cg, mask_sc = self.create_top_cg()
+        #
+        self.R_cg = np.zeros((self.n_frame, self.n_residue, self.MAX_BEAD, 3))
+        self.atom_mask_cg = np.zeros((self.n_residue, self.MAX_BEAD), dtype=float)
+        #
+        self.R_cg[:, :, 0] = self.R[:, :, ATOM_INDEX_CA, :]
+        self.atom_mask_cg[:, 0] = self.atom_mask_pdb[:, ATOM_INDEX_CA]
+        #
+        for i_res in range(self.n_residue):
+            mask = mask_sc[i_res]
+            mass = self.atomic_mass[i_res, mask]
+            if mass.sum() < EPS:
+                self.R_cg[:, i_res, 0] = self.R[:, i_res, ATOM_INDEX_CA, :]
+                self.atom_mask_cg[i_res, 0] = self.atom_mask_pdb[i_res, ATOM_INDEX_CA]
+            else:
+                mass_weighted_R = self.R[:, i_res, mask] * mass[None, :, None]
+                R_cm = mass_weighted_R.sum(axis=1) / mass.sum()
+                self.R_cg[:, i_res, 0] = R_cm
+                self.atom_mask_cg[i_res, 0] = 1.0
 
 
 class Martini(BaseClass):

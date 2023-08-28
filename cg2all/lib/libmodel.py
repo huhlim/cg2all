@@ -181,7 +181,7 @@ def set_model_config(arg: dict, cg_model, flattened=True) -> ConfigDict:
     #
     if config.globals.get("fix_atom", False):
         cg_model_name = cg_model.NAME
-        if cg_model_name in ["CalphaBasedModel", "CalphaCMModel"]:
+        if cg_model_name in ["CalphaBasedModel", "CalphaCMModel", "CalphaSCModel"]:
             fix_atom = [True, False, False]
         elif cg_model_name in ["BackboneModel"]:
             fix_atom = [True, True, False]
