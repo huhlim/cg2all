@@ -604,13 +604,16 @@ def download_ckpt_file(_model_type, ckpt_fn, fix_atom=False):
         url_s = {
             "CalphaBasedModel": "1uzsVPB_0t0RDp2P8qJ44LzE3JiVowtTx",
             "ResidueBasedModel": "1KsxfB0B90YQQd1iBzw3buznHIwzN_0sA",
+            "SidechainModel": "1kd_wq-Jq6z4CpRNLwkeAgPLQOl_xL64q",
             "CalphaCMModel": "1kLrmeO2F0WXvy0ujq0H4U5drjnuxNy8d",
+            "CalphaSCModel": "1sFW-g1_1fOYUtKVi7I8898Xs-NiKgG5R",
             "BackboneModel": "17OZDDCiwo7M8egPgRIlMfHujOT-oy0Fz",
             "MainchainModel": "1Q6Xlop_u1hQdLwTlHHdCDxWTC34I8TQg",
             "Martini": "1GiEtLiIOotLrj--7-jJI8aRE10duQoBE",
             "PRIMO": "1FW_QFijewI-z48GC-aDEjHMO_8g1syTH",
             "CalphaBasedModel-FIX": "16FfIW72BDy-RT46kgVoRsGYCcpHOeee1",
             "CalphaCMModel-FIX": "1xdDT-6kkkNiXcg3WxJm1gkw7wDj07Mw9",
+            "CalphaSCModel-FIX": "1ODp46hxHlfDiSVSbNwrVQvk1xugtuAH9",
             "BackboneModel-FIX": "1uosDHt20KokQBMqyZylO0m8VEONcEuK6",
             "MainchainModel-FIX": "1TaOn42s-3HPlxB4sJ8V21g8rO447F4_v",
         }
@@ -623,7 +626,7 @@ def download_ckpt_file(_model_type, ckpt_fn, fix_atom=False):
 
         #
         sys.stdout.write(f"Downloading from Zenodo ... {ckpt_fn}\n")
-        url = f"https://zenodo.org/record/8015059/files/{ckpt_fn.name}"
+        url = f"https://zenodo.org/record/8273725/files/{ckpt_fn.name}"
         if not ckpt_fn.parent.exists():
             ckpt_fn.parent.mkdir()
         with open(ckpt_fn, "wb") as fout:
