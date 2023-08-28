@@ -89,7 +89,8 @@ class BaseClass(PDB):
                 i_atm = self.NAME_BEAD.index(atom.name)
                 self.R_cg[:, i_res, i_atm] = self.traj.xyz[:, atom.index]
                 self.atom_mask_cg[i_res, i_atm] = 1.0
-                self.bfactors_cg[:, i_res, i_atm] = self.traj.bfactors[:, atom.index]
+                if not self.is_dcd:
+                    self.bfactors_cg[:, i_res, i_atm] = self.traj.bfactors[:, atom.index]
             #
             if i_res in ssbond_s:
                 HG1_index = ref_res.atom_s.index("HG1")

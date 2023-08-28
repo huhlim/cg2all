@@ -172,6 +172,10 @@ def main():
         input_s = dgl.dataloading.GraphDataLoader(
             input_s, batch_size=arg.batch_size, num_workers=arg.n_proc, shuffle=False
         )
+    else:
+        input_s = dgl.dataloading.GraphDataLoader(
+            input_s, batch_size=1, num_workers=1, shuffle=False
+        )
     timing["loading_input"] = time.time() - timing["loading_input"]
     #
     if arg.in_dcd_fn is None:
@@ -208,10 +212,12 @@ def main():
             t0 = time.time()
         #
         timing["writing_output"] = time.time()
-        xyz = np.array(xyz)
         if arg.batch_size > 1:
             batch = dgl.unbatch(batch)[0]
+            xyz = np.concatenate(xyz, axis=0)
             xyz = xyz.reshape((n_frame0, -1, 3))
+        else:
+            xyz = np.array(xyz)
         top, atom_index = create_topology_from_data(batch)
         xyz = xyz[:, atom_index]
         traj = mdtraj.Trajectory(
