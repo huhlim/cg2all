@@ -180,7 +180,7 @@ def main():
     #
     if arg.in_dcd_fn is None:
         t0 = time.time()
-        batch = input_s[0].to(device)
+        batch = next(iter(input_s)).to(device)
         timing["loading_input"] += time.time() - t0
         #
         t0 = time.time()
