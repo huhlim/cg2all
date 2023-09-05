@@ -12,9 +12,6 @@ import torch
 
 import cg2all
 
-BASE = pathlib.Path(__file__).parents[1].resolve()
-LIB_HOME = str(BASE / "lib")
-sys.path.insert(0, LIB_HOME)
 from libconfig import MODEL_HOME
 from libdata import (
     PredictionData,
@@ -32,38 +29,48 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def convert_cg2all(
-    in_pdb_fn,
-    out_fn,
-    model_type="CalphaBasedModel",
-    in_dcd_fn=None,
-    ckpt_fn=None,
-    fix_atom=False,
-    device=None,
-    n_proc=int(os.getenv("OMP_NUM_THREADS", 1)),
-):
+def load_model(model_type="CalphaBasedModel", ckpt_fn=None, fix_atom=False, device=None):
     # set device
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     else:
         device = torch.device(device)
-
-    # load model ckpt file
+    #
+    # set ckpt_fn path
     if ckpt_fn is None:
+        if model_type not in [
+            "CalphaBasedModel",
+            "ResidueBasedModel",
+            "CalphaCMModel",
+            "CalphaSCModel",
+            "SidechainModel",
+            "BackboneModel",
+            "MainchainModel",
+            "Martini",
+            "PRIMO",
+        ]:
+            raise ValueError(f"Invalid model_type, {model_type}")
+        #
         if fix_atom:
             ckpt_fn = MODEL_HOME / f"{model_type}-FIX.ckpt"
         else:
             ckpt_fn = MODEL_HOME / f"{model_type}.ckpt"
+        #
+        if not os.path.exists(ckpt_fn):
+            libmodel.download_ckpt_file(model_type, ckpt_fn, fix_atom=fix_atom)
+
+    else:
+        if not os.path.exists(ckpt_fn):
+            raise FileNotFoundError(ckpt_fn)
+    #
+    # load the ckpt file
     ckpt = torch.load(ckpt_fn, map_location=device)
     config = ckpt["hyper_parameters"]
 
-    # configure model
     if config["cg_model"] == "CalphaBasedModel":
         cg_model = libcg.CalphaBasedModel
     elif config["cg_model"] == "ResidueBasedModel":
         cg_model = libcg.ResidueBasedModel
-    elif config["cg_model"] == "SidechainModel":
-        cg_model = libcg.SidechainModel
     elif config["cg_model"] == "Martini":
         cg_model = libcg.Martini
     elif config["cg_model"] == "PRIMO":
@@ -72,20 +79,40 @@ def convert_cg2all(
         cg_model = libcg.CalphaCMModel
     elif config["cg_model"] == "CalphaSCModel":
         cg_model = libcg.CalphaSCModel
+    elif config["cg_model"] == "SidechainModel":
+        cg_model = libcg.SidechainModel
     elif config["cg_model"] == "BackboneModel":
         cg_model = libcg.BackboneModel
     elif config["cg_model"] == "MainchainModel":
         cg_model = libcg.MainchainModel
+    #
     config = libmodel.set_model_config(config, cg_model, flattened=False)
     model = libmodel.Model(config, cg_model, compute_loss=False)
-
-    # update state_dict
+    #
     state_dict = ckpt["state_dict"]
     for key in list(state_dict):
         state_dict[".".join(key.split(".")[1:])] = state_dict.pop(key)
     model.load_state_dict(state_dict)
     model = model.to(device)
     model.set_constant_tensors(device)
+
+    return model, cg_model, config
+
+
+def convert_cg2all(
+    in_pdb_fn,
+    out_fn=None,
+    model_type="CalphaBasedModel",
+    in_dcd_fn=None,
+    ckpt_fn=None,
+    fix_atom=False,
+    device=None,
+    batch_size=1,
+    n_proc=int(os.getenv("OMP_NUM_THREADS", 1)),
+):
+    model, cg_model, config = load_model(
+        model_type=model_type, ckpt_fn=ckpt_fn, fix_atom=fix_atom, device=device
+    )
     model.eval()
 
     # prepare input data
@@ -97,24 +124,30 @@ def convert_cg2all(
         fix_atom=config.globals.fix_atom,
     )
     if in_dcd_fn is not None:
+        n_frame0 = input_s.n_frame0
         unitcell_lengths = input_s.cg.unitcell_lengths
         unitcell_angles = input_s.cg.unitcell_angles
-    if len(input_s) > 1 and n_proc > 1:
+    if len(input_s) > 1 and (n_proc > 1 or batch_size > 1):
         input_s = dgl.dataloading.GraphDataLoader(
-            input_s, batch_size=1, num_workers=n_proc, shuffle=False
+            input_s, batch_size=batch_size, num_workers=n_proc, shuffle=False
+        )
+    else:
+        input_s = dgl.dataloading.GraphDataLoader(
+            input_s, batch_size=1, num_workers=1, shuffle=False
         )
 
     if in_dcd_fn is None:  # PDB file
-        batch = input_s[0].to(device)
+        batch = next(iter(input_s)).to(device)
         #
         with torch.no_grad():
             R = model.forward(batch)[0]["R"]
         #
         traj_s, ssbond_s = create_trajectory_from_batch(batch, R)
         output = patch_termini(traj_s[0])
-        output.save(out_fn)
-        if len(ssbond_s[0]) > 0:
-            write_SSBOND(out_fn, output.top, ssbond_s[0])
+        if out_fn is not None:
+            output.save(out_fn)
+            if len(ssbond_s[0]) > 0:
+                write_SSBOND(out_fn, output.top, ssbond_s[0])
 
     else:  # DCD file
         xyz = []
@@ -126,6 +159,12 @@ def convert_cg2all(
                 mask = batch.ndata["output_atom_mask"].cpu().detach().numpy()
                 xyz.append(R[mask > 0.0])
         #
+        if batch_size > 1:
+            batch = dgl.unbatch(batch)[0]
+            xyz = np.concatenate(xyz, axis=0)
+            xyz = xyz.reshape((n_frame0, -1, 3))
+        else:
+            xyz = np.array(xyz)
         top, atom_index = create_topology_from_data(batch)
         xyz = np.array(xyz)[:, atom_index]
         traj = mdtraj.Trajectory(
@@ -135,7 +174,8 @@ def convert_cg2all(
             unitcell_angles=unitcell_angles,
         )
         output = patch_termini(traj)
-        output.save(out_fn)
+        if out_fn is not None:
+            output.save(out_fn)
 
     return output
 
