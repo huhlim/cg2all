@@ -153,7 +153,6 @@ class BaseClass(PDB):
             b_len[shift:-shift] = v_size(dr[shift:-shift])
             #
             dr = dr / torch.clamp(b_len[:, None], min=EPS)
-            # dr[shift:-shift] = dr[shift:-shift] / b_len[shift:-shift, None]
             b_len = torch.clamp(b_len, max=1.0)
             #
             for s in range(shift):

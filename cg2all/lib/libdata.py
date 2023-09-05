@@ -402,6 +402,227 @@ class PredictionData(Dataset):
         return data
 
 
+class XYZData(Dataset):
+    def __init__(
+        self,
+        xyz,
+        residue_type,
+        chain_index=None,
+        mask=None,
+        ssbond_s=[],
+        radius=1.0,
+        fix_atom=False,
+        cg_model=None,
+    ):
+        # xyz: input CG coordinates, shape=(batch_size, max_residue, max_bead, 3)
+        # residue_type: input residue type, shape=(batch_size, max_residue) or (max_residue,)
+        # chain_index: input chain index, shape=(batch_size, max_residue) or (max_residue,)
+        # mask: input atom_mask_cg, shape=(batch_size, max_residue, max_bead) or (max_residue, max_bead)
+        #
+        self.device = xyz.device
+        self.dtype = xyz.dtype
+        self.batch_size = xyz.shape[0]
+        self.max_residue = xyz.shape[1]
+        self.max_bead = xyz.shape[2]
+        self.radius = radius
+        self.fix_atom = fix_atom
+        self.cg_model = cg_model
+        #
+        if len(residue_type.shape) == 1:
+            residue_type = residue_type.repeat(self.batch_size, 1)
+        if chain_index is None:
+            chain_index = torch.zeros(
+                (self.batch_size, self.max_residue), dtype=torch.long, device=self.device
+            )
+        elif len(chain_index.shape) == 1:
+            chain_index = chain_index.repeat(self.batch_size, 1)
+        if mask is None:
+            mask = torch.ones(
+                (self.batch_size, self.max_residue, self.max_bead),
+                dtype=self.dtype,
+                device=self.device,
+            )
+        elif len(mask.shape) == 2:
+            mask = mask.repeat(self.batch_size, 1, 1)
+        if len(ssbond_s) == 0 or (not isinstance(ssbond_s[0], list)):
+            ssbond_s = [ssbond_s for _ in range(self.batch_size)]
+
+        continuous = torch.zeros(
+            (self.batch_size, 2, self.max_residue), dtype=self.dtype, device=self.device
+        )
+        same_chain = chain_index[:, 1:] == chain_index[:, :-1]
+        continuous[:, 0, 1:] = same_chain
+        continuous[:, 1, :-1] = same_chain
+        #
+        self.xyz = xyz
+        self.residue_type = residue_type
+        self.chain_index = chain_index
+        self.continuous = continuous
+        self.mask = mask
+        self.ssbond_s = ssbond_s
+
+    def __len__(self):
+        return self.batch_size
+
+    def get_atom_mask(self, index=None):
+        def get_atom_mask_index(index):
+            atom_mask = np.zeros((self.max_residue, MAX_ATOM), dtype=float)
+            for i_res, residue_type in enumerate(self.residue_type[index]):
+                residue_name = AMINO_ACID_s[residue_type]
+                ref_res = residue_s[residue_name]
+                n_atom = len(ref_res.atom_s)
+                atom_mask[i_res, :n_atom] = 1.0
+                #
+                is_ssbond = False
+                for ssbond in self.ssbond_s[index]:
+                    if i_res in ssbond:
+                        is_ssbond = True
+                        break
+                if is_ssbond:
+                    HG1_index = ref_res.atom_s.index("HG1")
+                    atom_mask[i_res, HG1_index] = 0.0
+            return atom_mask
+
+        #
+        if index is None:
+            atom_mask = np.array(list(map(get_atom_mask_index, range(self.batch_size))))
+        else:
+            atom_mask = get_atom_mask_index(index)[None, :]
+        #
+        return atom_mask
+
+    def __getitem__(self, index):
+        mask = self.mask[index]
+        valid_residue = mask[:, 0] > 0.0
+        pos = self.xyz[index][valid_residue]
+        geom_s = libcg.BaseClass.get_geometry(
+            pos, mask[valid_residue], self.continuous[index][0, valid_residue]
+        )
+        node_feat = libcg.BaseClass.geom_to_feature(
+            geom_s, self.continuous[index][:, valid_residue], dtype=self.dtype
+        )
+        data = dgl.radius_graph(pos[:, 0], self.radius, self_loop=False)
+        data.ndata["pos"] = pos[:, 0]
+        data.ndata["node_feat_0"] = node_feat["0"][..., None]  # shape=(N, 16, 1)
+        data.ndata["node_feat_1"] = node_feat["1"]  # shape=(N, 4, 3)
+        #
+        edge_src, edge_dst = data.edges()
+        data.edata["rel_pos"] = pos[edge_dst, 0] - pos[edge_src, 0]
+        #
+        data.ndata["chain_index"] = self.chain_index[index][valid_residue]
+        data.ndata["residue_type"] = self.residue_type[index][valid_residue]
+        data.ndata["continuous"] = self.continuous[index][0, valid_residue]
+        #
+        if self.fix_atom and self.cg_model is not None:
+            raise NotImplementedError
+        #
+        ssbond_index = torch.full((data.num_nodes(),), -1, dtype=torch.long, device=self.device)
+        for cys_i, cys_j in self.ssbond_s[index]:
+            if cys_i < cys_j:  # because of loss_f_atomic_clash
+                ssbond_index[cys_j] = cys_i
+            else:
+                ssbond_index[cys_i] = cys_j
+        data.ndata["ssbond_index"] = ssbond_index
+        #
+        edge_feat = torch.zeros(
+            (data.num_edges(), 3), dtype=self.dtype, device=self.device
+        )  # bonded / ssbond / space
+        #
+        # bonded
+        pair_s = [
+            (i - 1, i) for i, cont in enumerate(self.continuous[index][0, valid_residue]) if cont
+        ]
+        pair_s = torch.as_tensor(pair_s, dtype=torch.long, device=self.device)
+        has_edges = data.has_edges_between(pair_s[:, 0], pair_s[:, 1])
+        pair_s = pair_s[has_edges]
+        eid = data.edge_ids(pair_s[:, 0], pair_s[:, 1])
+        edge_feat[eid, 0] = 1.0
+        eid = data.edge_ids(pair_s[:, 1], pair_s[:, 0])
+        edge_feat[eid, 0] = 1.0
+        #
+        # ssbond
+        if len(self.ssbond_s[index]) > 0:
+            pair_s = torch.as_tensor(self.ssbond_s[index], dtype=torch.long, device=self.device)
+            has_edges = data.has_edges_between(pair_s[:, 0], pair_s[:, 1])
+            pair_s = pair_s[has_edges]
+            eid = data.edge_ids(pair_s[:, 0], pair_s[:, 1])
+            edge_feat[eid, 1] = 1.0
+            eid = data.edge_ids(pair_s[:, 1], pair_s[:, 0])
+            edge_feat[eid, 1] = 1.0
+        #
+        # space
+        edge_feat[edge_feat.sum(dim=-1) == 0.0, 2] = 1.0
+        data.edata["edge_feat_0"] = edge_feat[..., None]
+
+        return data
+
+    def get_geometry(self):
+        raise NotImplementedError
+        r = self.xyz[:, :, 0]  # BB
+        #
+        not_defined = self.continuous[:, 0] == 0.0
+        geom_s = {}
+        #
+        # n_neigh
+        n_neigh = torch.zeros(r.shape[:2], dtype=DTYPE, device=self.device)
+        graph = dgl.radius_graph(r, 1.0)
+        n_neigh = graph.in_degrees(graph.nodes())
+        geom_s["n_neigh"] = n_neigh[:, None]
+
+        if _r.shape[1] > 1:
+            # BB --> SC
+            r_sc = _r[:, 1:]  # SC
+            geom_s["sc_vector"] = (r_sc - r[:, None, :]) * _mask[:, 1:, None]
+
+        # bond vectors
+        geom_s["bond_length"] = {}
+        geom_s["bond_vector"] = {}
+        for shift in [1, 2]:
+            dr = torch.zeros((r.shape[0] + shift, 3), dtype=DTYPE, device=self.device)
+            b_len = torch.zeros(r.shape[0] + shift, dtype=DTYPE, device=self.device)
+            #
+            dr[shift:-shift] = r[:-shift, :] - r[shift:, :]
+            b_len[shift:-shift] = v_size(dr[shift:-shift])
+            #
+            dr = dr / torch.clamp(b_len[:, None], min=EPS)
+            b_len = torch.clamp(b_len, max=1.0)
+            #
+            for s in range(shift):
+                dr[s : -shift + s][not_defined] = 0.0
+                b_len[s : -shift + s][not_defined] = 1.0
+            #
+            geom_s["bond_length"][shift] = (b_len[:-shift], b_len[shift:])
+            geom_s["bond_vector"][shift] = (dr[:-shift], -dr[shift:])
+
+        # bond angles
+        v1 = geom_s["bond_vector"][1][0]
+        v2 = geom_s["bond_vector"][1][1]
+        cosine = inner_product(v1, v2)
+        sine = 1.0 - cosine**2
+        mask = torch.ones_like(cosine)
+        mask[not_defined] = 0.0
+        mask[-1] = 0.0
+        mask[:-1][not_defined[1:]] = 0.0
+        cosine = cosine * mask
+        sine = sine * mask
+        geom_s["bond_angle"] = (cosine, sine)
+
+        # dihedral angles
+        R = torch.stack([r[0:-3], r[1:-2], r[2:-1], r[3:]]).reshape(-1, 4, 3)
+        t_ang = torsion_angle(R)
+        cosine = torch.cos(t_ang)
+        sine = torch.sin(t_ang)
+        for i in range(3):
+            cosine[: -(i + 1)][not_defined[i + 1 : -3]] = 0.0
+            sine[: -(i + 1)][not_defined[i + 1 : -3]] = 0.0
+        sc = torch.zeros((r.shape[0], 4, 2), device=self.device)
+        for i in range(4):
+            sc[i : i + cosine.shape[0], i, 0] = cosine
+            sc[i : i + sine.shape[0], i, 1] = sine
+        geom_s["dihedral_angle"] = sc
+        return geom_s
+
+
 def resSeq_to_number(resSeq_s: np.ndarray):
     resSeq_number_s = []
     resSeqIns_s = []
