@@ -85,6 +85,7 @@ options:
   - BackboneModel: Model only with backbone atoms (N, CA, C)
   - MainchainModel: Model only with mainchain atoms (N, CA, C, O)
   - Martini: [Martini](http://cgmartini.nl/) model
+  - Martini3: [Martini3](http://www.cgmartini.nl/index.php/martini-3-0) model
   - PRIMO: [PRIMO](http://dx.doi.org/10.1002/prot.22645) model
 * --chain-break-cutoff: The CA-CA distance cutoff that determines chain breaks. (default=10 Angstroms)
 * --fix/--fix_atom: preserve coordinates in the input CG model. For example, CA coordinates in a CA-trace model will be kept in its cg2all output model.
@@ -135,6 +136,7 @@ options:
   - BackboneModel: Model only with backbone atoms (N, CA, C)
   - MainchainModel: Model only with mainchain atoms (N, CA, C, O)
   - Martini: [Martini](http://cgmartini.nl/) model
+  - Martini3: [Martini3](http://www.cgmartini.nl/index.php/martini-3-0) model
   - PRIMO: [PRIMO](http://dx.doi.org/10.1002/prot.22645) model
   
 #### an example
