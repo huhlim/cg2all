@@ -610,6 +610,7 @@ def download_ckpt_file(_model_type, ckpt_fn, fix_atom=False):
             "BackboneModel": "17OZDDCiwo7M8egPgRIlMfHujOT-oy0Fz",
             "MainchainModel": "1Q6Xlop_u1hQdLwTlHHdCDxWTC34I8TQg",
             "Martini": "1GiEtLiIOotLrj--7-jJI8aRE10duQoBE",
+            "Martini3": "1oqz8BVheg534BydxPL6bFc-J2OeHOcfn",
             "PRIMO": "1FW_QFijewI-z48GC-aDEjHMO_8g1syTH",
             "CalphaBasedModel-FIX": "16FfIW72BDy-RT46kgVoRsGYCcpHOeee1",
             "CalphaCMModel-FIX": "1xdDT-6kkkNiXcg3WxJm1gkw7wDj07Mw9",
@@ -626,7 +627,7 @@ def download_ckpt_file(_model_type, ckpt_fn, fix_atom=False):
 
         #
         sys.stdout.write(f"Downloading from Zenodo ... {ckpt_fn}\n")
-        url = f"https://zenodo.org/record/8273725/files/{ckpt_fn.name}"
+        url = f"https://zenodo.org/record/8393343/files/{ckpt_fn.name}"
         if not ckpt_fn.parent.exists():
             ckpt_fn.parent.mkdir()
         with open(ckpt_fn, "wb") as fout:

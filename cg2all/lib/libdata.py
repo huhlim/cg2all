@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import copy
 import random
@@ -101,15 +102,19 @@ class PDBset(Dataset):
                 pt_fn = self.basedir / f"{pdb_id}_{self.use_pt}.pt"
             #
             if pt_fn.exists():
-                data = torch.load(pt_fn)
-                # temporary
-                if "bfactors" in data.ndata:
-                    del data.ndata["bfactors"]
-                    torch.save(data, pt_fn)
-                if self.crop > 0:
-                    return self.get_subgraph(data)
-                else:
-                    return data
+                try:
+                    data = torch.load(pt_fn)
+                    # temporary
+                    if "bfactors" in data.ndata:
+                        del data.ndata["bfactors"]
+                        torch.save(data, pt_fn)
+                    if self.crop > 0:
+                        return self.get_subgraph(data)
+                    else:
+                        return data
+                except:
+                    print(pt_fn, "removed")
+                    os.remove(pt_fn)
         #
         if self.use_md:
             pdb_fn = self.basedir / f"{pdb_id}/pdb/sample.{frame_index}.pdb"
@@ -512,3 +517,28 @@ def create_trajectory_from_batch(
         traj = mdtraj.Trajectory(xyz=xyz, topology=top)
         traj_s.append(traj)
     return traj_s, ssbond_s
+
+
+def main():
+    topology_map = read_coarse_grained_topology("martini3")
+    cg_model = libcg.Martini3
+
+    pdbset = PDBset(
+        basedir="pdb.29k",
+        pdblist="set/targets.pdb.29k",
+        cg_model=cg_model,
+        topology_map=topology_map,
+        radius=1.0,
+        use_pt="Martini3",
+    )
+
+    dataloader = dgl.dataloading.GraphDataLoader(pdbset, batch_size=1, num_workers=24)
+
+    import tqdm
+
+    for _ in tqdm.tqdm(dataloader):
+        pass
+
+
+if __name__ == "__main__":
+    main()

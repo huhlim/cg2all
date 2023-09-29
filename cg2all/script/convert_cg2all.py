@@ -46,7 +46,8 @@ def main():
         # fmt:off
         choices=["CalphaBasedModel", "CA", "ca", \
                 "ResidueBasedModel", "RES", "res", \
-                "Martini", "martini", \
+                "Martini", "martini", "Martini2", "martini2", \
+                "Martini3", "martini3", \
                 "PRIMO", "primo", \
                 "BB", "bb", "backbone", "Backbone", "BackboneModel", \
                 "MC", "mc", "mainchain", "Mainchain", "MainchainModel",
@@ -85,8 +86,10 @@ def main():
                 model_type = "CalphaBasedModel"
             elif arg.cg_model in ["ResidueBasedModel", "RES", "res"]:
                 model_type = "ResidueBasedModel"
-            elif arg.cg_model in ["Martini", "martini"]:
+            elif arg.cg_model in ["Martini", "martini", "Martini2", "martini2"]:
                 model_type = "Martini"
+            elif arg.cg_model in ["Martini3", "martini3"]:
+                model_type = "Martini3"
             elif arg.cg_model in ["PRIMO", "primo"]:
                 model_type = "PRIMO"
             elif arg.cg_model in ["CACM", "cacm", "CalphaCM", "CalphaCMModel"]:
@@ -120,6 +123,8 @@ def main():
         cg_model = cg2all.lib.libcg.ResidueBasedModel
     elif config["cg_model"] == "Martini":
         cg_model = cg2all.lib.libcg.Martini
+    elif config["cg_model"] == "Martini3":
+        cg_model = cg2all.lib.libcg.Martini3
     elif config["cg_model"] == "PRIMO":
         cg_model = cg2all.lib.libcg.PRIMO
     elif config["cg_model"] == "CalphaCMModel":
@@ -133,7 +138,7 @@ def main():
     elif config["cg_model"] == "MainchainModel":
         cg_model = cg2all.lib.libcg.MainchainModel
     #
-    if arg.is_all and config["cg_model"] in ["PRIMO", "Martini"]:
+    if arg.is_all and config["cg_model"] in ["PRIMO", "Martini", "Martini3"]:
         topology_map = read_coarse_grained_topology(config["cg_model"].lower())
     else:
         topology_map = None

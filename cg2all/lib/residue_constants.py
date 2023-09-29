@@ -226,9 +226,9 @@ TORSION_ENERGY_TENSOR = torch.as_tensor(torsion_energy_tensor)
 TORSION_ENERGY_DEP = torch.as_tensor(torsion_energy_dep, dtype=torch.long)
 
 
-def read_martini_topology():
+def read_martini_topology(name, MAX_BEAD):
     top_s = {}
-    with open(DATA_HOME / "martini.top") as fp:
+    with open(DATA_HOME / name) as fp:
         for line in fp:
             if line.startswith("RESI"):
                 resName = line.strip().split()[1]
@@ -237,15 +237,21 @@ def read_martini_topology():
                 atmName_s = line.strip().split()[2:]
                 top_s[resName].append(atmName_s)
     #
-    martini_map = np.full((MAX_RESIDUE_TYPE, MAX_ATOM), -1, dtype=int)
+    martini_map = np.zeros((MAX_RESIDUE_TYPE, MAX_BEAD, MAX_ATOM))
     for i_res, resName in enumerate(AMINO_ACID_s):
         if resName not in top_s:
             continue
         #
         for k, bead in enumerate(top_s[resName]):
             for atmName in bead:
+                if "_" in atmName:
+                    atmName, weight = atmName.split("_")
+                    weight = weight.split("/")
+                    weight = float(weight[0]) / float(weight[1])
+                else:
+                    weight = 1.0
                 i_atm = residue_s[resName].atom_s.index(atmName)
-                martini_map[i_res, i_atm] = k
+                martini_map[i_res, k, i_atm] = weight
     return martini_map
 
 
@@ -288,7 +294,9 @@ def update_primo_names(pdb):
 
 def read_coarse_grained_topology(model):
     if model == "martini":
-        return read_martini_topology()
+        return read_martini_topology("martini.top", 5)
+    elif model == "martini3":
+        return read_martini_topology("martini3.top", 6)
     elif model == "primo":
         return read_primo_topology()
 

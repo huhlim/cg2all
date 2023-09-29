@@ -455,7 +455,8 @@ class Martini(BaseClass):
                 atom.serial = serial
                 atom.name = "BB"
             #
-            n_sc = max(topology_map[self.residue_index[residue.index]])
+            residue_index = self.residue_index[residue.index]
+            n_sc = max(np.where(topology_map[residue_index] > 0.0)[0])
             for i in range(n_sc):
                 top.add_atom(f"SC{i+1}", bb.element, residue)
             serial += n_sc
@@ -469,20 +470,26 @@ class Martini(BaseClass):
         self.atom_mask_cg = np.zeros((self.n_residue, self.MAX_BEAD), dtype=float)
         #
         for i_res in range(self.n_residue):
-            index = topology_map[self.residue_index[i_res]]
+            weight = topology_map[self.residue_index[i_res]][None, ..., None]
+            R = self.R[:, i_res][:, None]
+            mass = self.atomic_mass[i_res][None, None, :, None]
             #
-            mass_weighted_R = self.R[:, i_res] * self.atomic_mass[None, i_res, :, None]
-            mass_weighted_R[:, index == -1] = 0.0
-            for i_frame in range(self.n_frame):
-                np.add.at(self.R_cg[i_frame, i_res], index, mass_weighted_R[i_frame])
-                #
-            mass_sum = np.zeros(self.MAX_BEAD)
-            mass = self.atomic_mass[i_res].copy()
-            mass[index == -1] = 0.0
-            np.add.at(mass_sum, index, mass)
+            mass_weighted_R = (weight * R * mass).sum(2)
+            mass_sum = (weight * mass).sum(axis=2)
             #
-            self.R_cg[:, i_res] /= np.maximum(EPS, mass_sum[None, :, None])
-            self.atom_mask_cg[i_res, mass_sum > EPS] = 1.0
+            self.R_cg[:, i_res] = mass_weighted_R / np.maximum(mass_sum, EPS)
+            self.atom_mask_cg[i_res, mass_sum[0, :, 0] > EPS] = 1.0
+
+
+class Martini3(Martini):
+    NAME = "Martini3"
+    NAME_BEAD = ["BB", "SC1", "SC2", "SC3", "SC4", "SC5"]
+    MAX_BEAD = 6
+
+    n_node_scalar = 17
+    n_node_vector = 9
+    n_edge_scalar = 3
+    n_edge_vector = 0
 
 
 class PRIMO(BaseClass):
@@ -653,3 +660,12 @@ def get_backbone_angles(R):
     #
     out = torch.cat([torch.cos(tor_s), torch.sin(tor_s)], dim=-1).view(-1, 12)
     return out
+
+
+def main():
+    topology_map = read_coarse_grained_topology("martini3")
+    cg_model = Martini3("test/3pbl_A.pdb", is_all=True, topology_map=topology_map)
+
+
+if __name__ == "__main__":
+    main()
