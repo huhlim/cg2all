@@ -65,6 +65,7 @@ options:
   --chain-break-cutoff CHAIN_BREAK_CUTOFF
   -a, --all, --is_all
   --fix, --fix_atom
+  --standard-name
   --ckpt CKPT_FN
   --time TIME_JSON
   --device DEVICE
@@ -89,6 +90,7 @@ options:
   - PRIMO: [PRIMO](http://dx.doi.org/10.1002/prot.22645) model
 * --chain-break-cutoff: The CA-CA distance cutoff that determines chain breaks. (default=10 Angstroms)
 * --fix/--fix_atom: preserve coordinates in the input CG model. For example, CA coordinates in a CA-trace model will be kept in its cg2all output model.
+* --standard-name: output atom names follow the IUPAC nomenclature. (default=False; output atom names will use CHARMM atom names)
 * --ckpt: Input PyTorch ckpt file (optional). If a ckpt file is given, it will override "--cg" option.
 * --time: Output JSON file for recording timing. (optional)
 * --device: Specify a device to run the model. (optional) You can choose "cpu" or "cuda", or the script will detect one automatically. </br>

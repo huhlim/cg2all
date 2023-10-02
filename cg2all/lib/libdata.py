@@ -7,6 +7,7 @@ import random
 import numpy as np
 import pathlib
 import mdtraj
+from mdtraj.formats import PDBTrajectoryFile
 from typing import List
 from string import ascii_letters
 
@@ -465,7 +466,6 @@ def create_topology_from_data(data: dgl.DGLGraph, write_native: bool = False) ->
             mask = data.ndata["output_atom_mask"][i_res]
             #
             for i_atm, atom_name in zip(ref_res.output_atom_index, ref_res.output_atom_s):
-                # for i_atm, atom_name in enumerate(ref_res.atom_s):
                 if mask[i_atm] > 0.0:
                     element = mdtraj.core.element.Element.getBySymbol(atom_name[0])
                     top.add_atom(atom_name, element, top_residue)
@@ -517,6 +517,16 @@ def create_trajectory_from_batch(
         traj = mdtraj.Trajectory(xyz=xyz, topology=top)
         traj_s.append(traj)
     return traj_s, ssbond_s
+
+
+def standardize_atom_name(out: mdtraj.Trajectory):
+    PDBTrajectoryFile._loadNameReplacementTables()
+    #
+    for residue in out.topology.residues:
+        atom_name_mapping = PDBTrajectoryFile._atomNameReplacements.get(residue.name, {})
+        #
+        for atom in residue.atoms:
+            atom.name = atom_name_mapping.get(atom.name, atom.name)
 
 
 def main():
