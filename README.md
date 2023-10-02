@@ -162,6 +162,7 @@ options:
   -n N_STEP, --step N_STEP
   --freq OUTPUT_FREQ, --output_freq OUTPUT_FREQ
   --restraint RESTRAINT
+  --standard-name
 ```
 #### arguments
 * -p/--pdb: Input PDB file (**mandatory**).
@@ -171,6 +172,7 @@ options:
 * -n/--step: The number of minimization steps. (optional, default=1000)
 * --freq/--output_freq: The interval between saving intermediate outputs. (optional, default=100)
 * --restraint: The weight of distance restraints. (optional, default=100.0)
+* --standard-name: output atom names follow the IUPAC nomenclature. (default=False; output atom names will use CHARMM atom names)
 
 #### an example
 ```bash
