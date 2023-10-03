@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import copy
 import random
 import numpy as np
 import pathlib
 import mdtraj
+from mdtraj.formats import PDBTrajectoryFile
 from typing import List
 from string import ascii_letters
 
@@ -101,15 +103,19 @@ class PDBset(Dataset):
                 pt_fn = self.basedir / f"{pdb_id}_{self.use_pt}.pt"
             #
             if pt_fn.exists():
-                data = torch.load(pt_fn)
-                # temporary
-                if "bfactors" in data.ndata:
-                    del data.ndata["bfactors"]
-                    torch.save(data, pt_fn)
-                if self.crop > 0:
-                    return self.get_subgraph(data)
-                else:
-                    return data
+                try:
+                    data = torch.load(pt_fn)
+                    # temporary
+                    if "bfactors" in data.ndata:
+                        del data.ndata["bfactors"]
+                        torch.save(data, pt_fn)
+                    if self.crop > 0:
+                        return self.get_subgraph(data)
+                    else:
+                        return data
+                except:
+                    print(pt_fn, "removed")
+                    os.remove(pt_fn)
         #
         if self.use_md:
             pdb_fn = self.basedir / f"{pdb_id}/pdb/sample.{frame_index}.pdb"
@@ -681,7 +687,6 @@ def create_topology_from_data(data: dgl.DGLGraph, write_native: bool = False) ->
             mask = data.ndata["output_atom_mask"][i_res]
             #
             for i_atm, atom_name in zip(ref_res.output_atom_index, ref_res.output_atom_s):
-                # for i_atm, atom_name in enumerate(ref_res.atom_s):
                 if mask[i_atm] > 0.0:
                     element = mdtraj.core.element.Element.getBySymbol(atom_name[0])
                     top.add_atom(atom_name, element, top_residue)
@@ -733,3 +738,38 @@ def create_trajectory_from_batch(
         traj = mdtraj.Trajectory(xyz=xyz, topology=top)
         traj_s.append(traj)
     return traj_s, ssbond_s
+
+
+def standardize_atom_name(out: mdtraj.Trajectory):
+    PDBTrajectoryFile._loadNameReplacementTables()
+    #
+    for residue in out.topology.residues:
+        atom_name_mapping = PDBTrajectoryFile._atomNameReplacements.get(residue.name, {})
+        #
+        for atom in residue.atoms:
+            atom.name = atom_name_mapping.get(atom.name, atom.name)
+
+
+def main():
+    topology_map = read_coarse_grained_topology("martini3")
+    cg_model = libcg.Martini3
+
+    pdbset = PDBset(
+        basedir="pdb.29k",
+        pdblist="set/targets.pdb.29k",
+        cg_model=cg_model,
+        topology_map=topology_map,
+        radius=1.0,
+        use_pt="Martini3",
+    )
+
+    dataloader = dgl.dataloading.GraphDataLoader(pdbset, batch_size=1, num_workers=24)
+
+    import tqdm
+
+    for _ in tqdm.tqdm(dataloader):
+        pass
+
+
+if __name__ == "__main__":
+    main()

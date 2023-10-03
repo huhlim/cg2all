@@ -21,6 +21,7 @@ from cg2all.lib.libdata import (
     PredictionData,
     create_trajectory_from_batch,
     create_topology_from_data,
+    standardize_atom_name,
 )
 from cg2all.lib.residue_constants import read_coarse_grained_topology
 import cg2all.lib.libcg
@@ -46,7 +47,8 @@ def main():
         # fmt:off
         choices=["CalphaBasedModel", "CA", "ca", \
                 "ResidueBasedModel", "RES", "res", \
-                "Martini", "martini", \
+                "Martini", "martini", "Martini2", "martini2", \
+                "Martini3", "martini3", \
                 "PRIMO", "primo", \
                 "BB", "bb", "backbone", "Backbone", "BackboneModel", \
                 "MC", "mc", "mainchain", "Mainchain", "MainchainModel",
@@ -59,6 +61,7 @@ def main():
     arg.add_argument("--chain-break-cutoff", dest="chain_break_cutoff", default=10.0, type=float)
     arg.add_argument("-a", "--all", "--is_all", dest="is_all", default=False, action="store_true")
     arg.add_argument("--fix", "--fix_atom", dest="fix_atom", default=False, action="store_true")
+    arg.add_argument("--standard-name", dest="standard_names", default=False, action="store_true")
     arg.add_argument("--ckpt", dest="ckpt_fn", default=None)
     arg.add_argument("--time", dest="time_json", default=None)
     arg.add_argument("--device", dest="device", default=None)
@@ -85,8 +88,10 @@ def main():
                 model_type = "CalphaBasedModel"
             elif arg.cg_model in ["ResidueBasedModel", "RES", "res"]:
                 model_type = "ResidueBasedModel"
-            elif arg.cg_model in ["Martini", "martini"]:
+            elif arg.cg_model in ["Martini", "martini", "Martini2", "martini2"]:
                 model_type = "Martini"
+            elif arg.cg_model in ["Martini3", "martini3"]:
+                model_type = "Martini3"
             elif arg.cg_model in ["PRIMO", "primo"]:
                 model_type = "PRIMO"
             elif arg.cg_model in ["CACM", "cacm", "CalphaCM", "CalphaCMModel"]:
@@ -120,6 +125,8 @@ def main():
         cg_model = cg2all.lib.libcg.ResidueBasedModel
     elif config["cg_model"] == "Martini":
         cg_model = cg2all.lib.libcg.Martini
+    elif config["cg_model"] == "Martini3":
+        cg_model = cg2all.lib.libcg.Martini3
     elif config["cg_model"] == "PRIMO":
         cg_model = cg2all.lib.libcg.PRIMO
     elif config["cg_model"] == "CalphaCMModel":
@@ -133,7 +140,7 @@ def main():
     elif config["cg_model"] == "MainchainModel":
         cg_model = cg2all.lib.libcg.MainchainModel
     #
-    if arg.is_all and config["cg_model"] in ["PRIMO", "Martini"]:
+    if arg.is_all and config["cg_model"] in ["PRIMO", "Martini", "Martini3"]:
         topology_map = read_coarse_grained_topology(config["cg_model"].lower())
     else:
         topology_map = None
@@ -191,6 +198,8 @@ def main():
         timing["writing_output"] = time.time()
         traj_s, ssbond_s = create_trajectory_from_batch(batch, R)
         output = patch_termini(traj_s[0])
+        if arg.standard_names:
+            standardize_atom_name(output)
         output.save(arg.out_fn)
         if len(ssbond_s[0]) > 0:
             write_SSBOND(arg.out_fn, output.top, ssbond_s[0])
@@ -227,6 +236,8 @@ def main():
             unitcell_angles=unitcell_angles,
         )
         output = patch_termini(traj)
+        if arg.standard_names:
+            standardize_atom_name(output)
         output.save(arg.out_fn)
         #
         if arg.outpdb_fn is not None:

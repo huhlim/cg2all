@@ -1,0 +1,95 @@
+RESI ALA
+BEAD BB    N    CA   C    O    HN   CB  
+#
+RESI CYS
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   SG  
+#
+RESI ASP
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG   OD1  OD2 
+#
+RESI GLU
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG   CD   OE1  OE2 
+#
+RESI PHE
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG   CD1  HD1 
+BEAD SC2   CD2  HD2  CE2  HE2 
+BEAD SC3   CE1  HE1  CZ   HZ  
+#
+RESI GLY
+BEAD BB    N    CA   C    O    HN  
+#
+RESI HSD
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG  
+BEAD SC2   CD2  HD2  NE2 
+BEAD SC3   ND1  HD1  CE1  HE1 
+#
+RESI HSE
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG  
+BEAD SC2   CD2  HD2  NE2  HE2 
+BEAD SC3   ND1  CE1  HE1 
+#
+RESI ILE
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG1  CG2  CD
+#
+RESI LYS
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG   CD  
+BEAD SC2   CE   NZ   HZ1  HZ2  HZ3 
+#
+RESI LEU
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG   CD1  CD2 
+#
+RESI MET
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG   SD   CE  
+#
+RESI ASN
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG   ND2  OD1  HD21 HD22
+#
+RESI PRO
+BEAD BB    N    CA   C    O
+BEAD SC1   CB   CG   CD  
+#
+RESI GLN
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG   CD   OE1  NE2  HE21 HE22
+#
+RESI ARG
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG   CD  
+BEAD SC2   NE   HE   CZ   NH1  NH2  HH11 HH12 HH21 HH22
+#
+RESI SER
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   OG   HG1 
+#
+RESI THR
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   OG1  HG1  CG2 
+#
+RESI VAL
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG1  CG2 
+#
+RESI TRP
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG   CD2 
+BEAD SC2   CD1  HD1  NE1  HE1  CE2 
+BEAD SC3   CE3  HE3  CZ3  HZ3 
+BEAD SC4   CZ2  HZ2  CH2  HH2 
+#
+RESI TYR
+BEAD BB    N    CA   C    O    HN  
+BEAD SC1   CB   CG   CD1  HD1 
+BEAD SC2   CD2  HD2  CE2  HE2 
+BEAD SC3   CE1  HE1  CZ   OH   HH  
+#

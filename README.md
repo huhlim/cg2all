@@ -65,6 +65,7 @@ options:
   --chain-break-cutoff CHAIN_BREAK_CUTOFF
   -a, --all, --is_all
   --fix, --fix_atom
+  --standard-name
   --ckpt CKPT_FN
   --time TIME_JSON
   --device DEVICE
@@ -85,9 +86,11 @@ options:
   - BackboneModel: Model only with backbone atoms (N, CA, C)
   - MainchainModel: Model only with mainchain atoms (N, CA, C, O)
   - Martini: [Martini](http://cgmartini.nl/) model
+  - Martini3: [Martini3](http://www.cgmartini.nl/index.php/martini-3-0) model
   - PRIMO: [PRIMO](http://dx.doi.org/10.1002/prot.22645) model
 * --chain-break-cutoff: The CA-CA distance cutoff that determines chain breaks. (default=10 Angstroms)
 * --fix/--fix_atom: preserve coordinates in the input CG model. For example, CA coordinates in a CA-trace model will be kept in its cg2all output model.
+* --standard-name: output atom names follow the IUPAC nomenclature. (default=False; output atom names will use CHARMM atom names)
 * --ckpt: Input PyTorch ckpt file (optional). If a ckpt file is given, it will override "--cg" option.
 * --time: Output JSON file for recording timing. (optional)
 * --device: Specify a device to run the model. (optional) You can choose "cpu" or "cuda", or the script will detect one automatically. </br>
@@ -135,6 +138,7 @@ options:
   - BackboneModel: Model only with backbone atoms (N, CA, C)
   - MainchainModel: Model only with mainchain atoms (N, CA, C, O)
   - Martini: [Martini](http://cgmartini.nl/) model
+  - Martini3: [Martini3](http://www.cgmartini.nl/index.php/martini-3-0) model
   - PRIMO: [PRIMO](http://dx.doi.org/10.1002/prot.22645) model
   
 #### an example
@@ -158,6 +162,7 @@ options:
   -n N_STEP, --step N_STEP
   --freq OUTPUT_FREQ, --output_freq OUTPUT_FREQ
   --restraint RESTRAINT
+  --standard-name
 ```
 #### arguments
 * -p/--pdb: Input PDB file (**mandatory**).
@@ -167,6 +172,7 @@ options:
 * -n/--step: The number of minimization steps. (optional, default=1000)
 * --freq/--output_freq: The interval between saving intermediate outputs. (optional, default=100)
 * --restraint: The weight of distance restraints. (optional, default=100.0)
+* --standard-name: output atom names follow the IUPAC nomenclature. (default=False; output atom names will use CHARMM atom names)
 
 #### an example
 ```bash

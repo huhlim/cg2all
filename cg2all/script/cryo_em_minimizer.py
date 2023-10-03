@@ -15,7 +15,7 @@ os.environ["OPENMM_PLUGIN_DIR"] = "/dev/null"
 import mdtraj
 
 from cg2all.lib.libconfig import MODEL_HOME, DTYPE
-from cg2all.lib.libdata import create_topology_from_data
+from cg2all.lib.libdata import create_topology_from_data, standardize_atom_name
 import cg2all.lib.libcg
 from cg2all.lib.libpdb import write_SSBOND
 from cg2all.lib.libter import patch_termini
@@ -64,6 +64,7 @@ def main():
         default="ResidueBasedModel",
         choices=["CalphaBasedModel", "CA", "ca", "ResidueBasedModel", "RES", "res"],
     )
+    arg.add_argument("--standard-name", dest="standard_names", default=False, action="store_true")
     arg = arg.parse_args()
     #
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -121,6 +122,8 @@ def main():
     xyz = ret["R"].cpu().detach().numpy()[out_mask > 0.0][None, out_atom_index]
     output = mdtraj.Trajectory(xyz=xyz, topology=out_top)
     output = patch_termini(output)
+    if arg.standard_names:
+        standardize_atom_name(output)
     output.save(out_fn)
     if len(ssbond) > 0:
         write_SSBOND(out_fn, output.top, ssbond)
@@ -153,6 +156,8 @@ def main():
             xyz = ret["R"].cpu().detach().numpy()[out_mask > 0.0][None, out_atom_index]
             output = mdtraj.Trajectory(xyz=xyz, topology=out_top)
             output = patch_termini(output)
+            if arg.standard_names:
+                standardize_atom_name(output)
             output.save(out_fn)
             if len(ssbond) > 0:
                 write_SSBOND(out_fn, output.top, ssbond)
