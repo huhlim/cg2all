@@ -185,3 +185,6 @@ The training/validation/test sets are available at [zenodo](https://zenodo.org/r
 
 ## Reference
 Lim Heo & Michael Feig, "One particle per residue is sufficient to describe all-atom protein structures", _bioRxiv_ (**2023**). [Link](https://www.biorxiv.org/content/10.1101/2023.05.22.541652v1)
+
+
+[![DOI](https://zenodo.org/badge/585390653.svg)](https://zenodo.org/doi/10.5281/zenodo.10009208)
