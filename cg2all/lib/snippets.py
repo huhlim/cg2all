@@ -66,6 +66,8 @@ def convert_cg2all(
         cg_model = libcg.SidechainModel
     elif config["cg_model"] == "Martini":
         cg_model = libcg.Martini
+    elif config["cg_model"] == "Martini3":
+        cg_model = libcg.Martini3
     elif config["cg_model"] == "PRIMO":
         cg_model = libcg.PRIMO
     elif config["cg_model"] == "CalphaCMModel":
@@ -148,6 +150,10 @@ def convert_all2cg(in_pdb_fn, out_fn, model_type="CalphaBasedModel", in_dcd_fn=N
     elif model_type in ["Martini", "martini"]:
         cg_model = functools.partial(
             libcg.Martini, topology_map=read_coarse_grained_topology("martini")
+        )
+    elif model_type in ["Martini3", "martini3"]:
+        cg_model = functools.partial(
+            libcg.Martini3, topology_map=read_coarse_grained_topology("martini3")
         )
     elif model_type in ["PRIMO", "primo"]:
         cg_model = functools.partial(
