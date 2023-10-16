@@ -230,6 +230,12 @@ class PDB(object):
         self.continuous[0, 1:][~has_backbone[:-1]] = False
         self.continuous[1, :-1][~has_backbone[1:]] = False
 
+    @staticmethod
+    def continuous_to_segment(continuous):
+        segment = np.cumsum(1 - continuous.astype(int))
+        segment[-1] = segment[-2]
+        return segment
+
     def check_validity(self):
         valid = np.any(self.continuous, axis=0)
         #

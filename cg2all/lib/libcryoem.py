@@ -184,17 +184,32 @@ def loss_f_bonded_energy_aa(batch: dgl.DGLGraph, R: torch.Tensor, weight_s=(1.0,
 
 class DistanceRestraint(object):
     def __init__(self, data, device, radius=1.0):
+        bfac_s = torch.as_tensor(data.cg.bfactors_cg[0, :, 0], dtype=DTYPE, device=device)
+        #
         valid_residue = data.cg.atom_mask_cg[:, 0] > 0.0
         r_cg0 = data.r_cg[valid_residue, 0].clone().detach().to(device)
         g, d0 = dgl.radius_graph(r_cg0, radius, self_loop=False, get_distances=True)
-        self.edge_src, self.edge_dst = g.edges()
         self.d0 = d0[:, 0]
+        self.edge_src, self.edge_dst = g.edges()
+        if bfac_s.std() < 0.1:
+            self.w0 = torch.ones_like(self.d0, device=device)
+        else:
+            weight_s = bfac_s / 100.0
+            self.w0 = torch.sqrt(weight_s[self.edge_src] * weight_s[self.edge_dst])
+            sequence_cutoff = 6 + 20 * self.w0
+            sequence_separation = torch.abs(self.edge_src - self.edge_dst)
+            chain_index = torch.as_tensor(data.cg.chain_index, dtype=torch.long, device=device)
+            chain_src = chain_index[self.edge_src]
+            chain_dst = chain_index[self.edge_dst]
+            sequence_separation[chain_src != chain_dst] = 20
+            sequence_separation[sequence_separation > 20] = 20
+            self.w0[sequence_separation > sequence_cutoff] = 0.0
 
     def eval(self, batch):
         r_cg = batch.ndata["pos"]
         dr = r_cg[self.edge_dst] - r_cg[self.edge_src]
         d = torch.sqrt(torch.square(dr).sum(dim=-1))
-        loss = torch.square(d - self.d0)
+        loss = torch.square(d - self.d0) * self.w0
         loss = torch.sum(loss)
         return loss
 
@@ -239,7 +254,7 @@ class CryoEMLossFunction(object):
                     batch, R, ret["ss"], self.TORSION_PARs
                 ) * R.size(0)
 
-        loss["cg"] = self.geometry_energy.eval(batch)
+        loss["cg"] = self.geometry_energy.eval(batch, weight=[1.0, 1.0, 100.0])
         loss["restraint"] = self.distance_restraint.eval(batch)
         #
         loss_sum = 0.0
@@ -252,15 +267,18 @@ class CryoEMLossFunction(object):
 
 
 class MinimizableData(object):
-    def __init__(self, pdb_fn, cg_model, is_all=False, radius=1.0, dtype=DTYPE):
+    def __init__(
+        self, pdb_fn, cg_model, is_all=False, radius=1.0, chain_break_cutoff=1.0, dtype=DTYPE
+    ):
         super().__init__()
         #
         self.pdb_fn = pdb_fn
         #
         self.radius = radius
         self.dtype = dtype
+        self.chain_break_cutoff = chain_break_cutoff
         #
-        self.cg = cg_model(self.pdb_fn, is_all=is_all)
+        self.cg = cg_model(self.pdb_fn, is_all=is_all, chain_break_cutoff=chain_break_cutoff)
         #
         self.r_cg = torch.as_tensor(self.cg.R_cg[0], dtype=self.dtype)
         self.r_cg.requires_grad = True

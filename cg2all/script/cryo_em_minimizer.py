@@ -57,6 +57,7 @@ def main():
     arg.add_argument("-a", "--all", "--is_all", dest="is_all", default=False, action="store_true")
     arg.add_argument("-n", "--step", dest="n_step", default=1000, type=int)
     arg.add_argument("--freq", "--output_freq", dest="output_freq", default=100, type=int)
+    arg.add_argument("--chain-break-cutoff", dest="chain_break_cutoff", default=10.0, type=float)
     arg.add_argument("--restraint", dest="restraint", default=100.0, type=float)
     arg.add_argument(
         "--cg",
@@ -95,7 +96,12 @@ def main():
     model.set_constant_tensors(device)
     model.eval()
     #
-    data = MinimizableData(arg.in_pdb_fn, cg_model, is_all=arg.is_all)
+    data = MinimizableData(
+        arg.in_pdb_fn,
+        cg_model,
+        is_all=arg.is_all,
+        chain_break_cutoff=0.1 * arg.chain_break_cutoff,
+    )
     output_dir = pathlib.Path(arg.out_dir)
     output_dir.mkdir(exist_ok=True)
     #
