@@ -151,7 +151,13 @@ convert_all2cg -p tests/1ab1_A.pdb -o tests/1ab1_A.calpha.pdb --cg CalphaBasedMo
 ### script/cryo_em_minimizer.py 
 Local optimization of protein model structure against given electron density map. This script is a proof-of-concept that utilizes cg2all network to optimize at CA-level resolution with objective functions in both atomistic and CA-level resolutions. It is highly recommended to use **cuda** environment.
 ```bash
-usage: cryo_em_minimizer [-h] -p IN_PDB_FN -m IN_MAP_FN -o OUT_DIR [-a] [-n N_STEP] [--freq OUTPUT_FREQ] [--restraint RESTRAINT]
+usage: cryo_em_minimizer [-h] -p IN_PDB_FN -m IN_MAP_FN -o OUT_DIR [-a]
+                         [-n N_STEP] [--freq OUTPUT_FREQ]
+                         [--chain-break-cutoff CHAIN_BREAK_CUTOFF]
+                         [--restraint RESTRAINT]
+                         [--cg {CalphaBasedModel,CA,ca,ResidueBasedModel,RES,res}]
+                         [--standard-name] [--uniform_restraint]
+                         [--nonuniform_restraint] [--segment SEGMENT_S]
 
 options:
   -h, --help            show this help message and exit
@@ -161,8 +167,13 @@ options:
   -a, --all, --is_all
   -n N_STEP, --step N_STEP
   --freq OUTPUT_FREQ, --output_freq OUTPUT_FREQ
+  --chain-break-cutoff CHAIN_BREAK_CUTOFF
   --restraint RESTRAINT
+  --cg {CalphaBasedModel,CA,ca,ResidueBasedModel,RES,res}
   --standard-name
+  --uniform_restraint
+  --nonuniform_restraint
+  --segment SEGMENT_S
 ```
 #### arguments
 * -p/--pdb: Input PDB file (**mandatory**).
@@ -171,8 +182,17 @@ options:
 * -a/--all/--is_all: Whether the input PDB file is atomistic structure or not. (optional, default=False)
 * -n/--step: The number of minimization steps. (optional, default=1000)
 * --freq/--output_freq: The interval between saving intermediate outputs. (optional, default=100)
+* --chain-break-cutoff: The CA-CA distance cutoff that determines chain breaks. (default=10 Angstroms)
 * --restraint: The weight of distance restraints. (optional, default=100.0)
+* --cg: Coarse-grained representation to use (default=ResidueBasedModel)
 * --standard-name: output atom names follow the IUPAC nomenclature. (default=False; output atom names will use CHARMM atom names)
+*  --uniform_restraint/--nonuniform_restraint: Whether to use uniform restraints. (default=True) If it is set to False,
+    the restraint weights will be dependent on the pLDDT values recorded in the PDB file's B-factor columns. 
+*  --segment: The segmentation method for applying rigid-body operations. (default=None)
+    * None: Input structure is not segmented, so the same rigid-body operations are applied to the whole structure.
+    * chain: Input structure is segmented based on chain IDs. Rigid-body operations are independently applied to each chain.
+    * segment: Similar to "chain" option, but the structure is segmented based on peptide bond connectivities. 
+    * 0-99,100-199: Explicit segmentation based on the 0-index based residue numbers.
 
 #### an example
 ```bash
