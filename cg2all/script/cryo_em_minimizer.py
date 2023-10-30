@@ -8,19 +8,20 @@ import tqdm
 import pathlib
 import argparse
 
-import torch
-import dgl
-
 os.environ["OPENMM_PLUGIN_DIR"] = "/dev/null"
 import mdtraj
+import numpy as np
+
+import torch
+import dgl
 
 from cg2all.lib.libconfig import MODEL_HOME, DTYPE
 from cg2all.lib.libdata import create_topology_from_data, standardize_atom_name
 import cg2all.lib.libcg
-from cg2all.lib.libpdb import write_SSBOND
+from cg2all.lib.libpdb import write_SSBOND, PDB
 from cg2all.lib.libter import patch_termini
 import cg2all.lib.libmodel
-from cg2all.lib.torch_basics import v_norm_safe, inner_product, rotate_vector
+from cg2all.lib.torch_basics import v_norm_safe, inner_product, rotate_vector, v_size
 from cg2all.lib.libcryoem import CryoEMLossFunction, MinimizableData
 
 import warnings
@@ -29,23 +30,29 @@ warnings.filterwarnings("ignore")
 
 
 def rotation_matrix_from_6D(v):
-    v0 = v[0]
-    v1 = v[1]
+    v0 = v[:, 0]
+    v1 = v[:, 1]
     e0 = v_norm_safe(v0, index=0)
-    u1 = v1 - e0 * inner_product(e0, v1)
+    u1 = v1 - e0 * inner_product(e0, v1)[:, None]
     e1 = v_norm_safe(u1, index=1)
-    e2 = torch.cross(e0, e1)
+    e2 = torch.cross(e0, e1, dim=1)
     rot = torch.stack([e0, e1, e2], dim=1).mT
     return rot
 
 
-def rigid_body_move(r, trans, rotation):
-    center_of_mass = r.mean(dim=(0, 1))
+def rigid_body_move(r, n_segment, segment_s, trans_s, rotation_s):
+    trans = torch.take_along_dim(trans_s, segment_s[:, None], axis=0)
+    rotation = torch.take_along_dim(rotation_s, segment_s[:, None, None], axis=0)
     rotation_matrix = rotation_matrix_from_6D(rotation)
     #
-    r_cg = r - center_of_mass
-    r_cg = rotate_vector(rotation_matrix, r_cg) + center_of_mass + trans
+    center_of_mass = torch.zeros_like(trans)
+    for i in range(n_segment):
+        mask = segment_s == i
+        center_of_mass[mask] = r[mask].mean(dim=(0, 1))
     #
+    r_cg = r - center_of_mass[:, None, :]
+    r_cg = rotate_vector(rotation_matrix, r_cg[:, 0])[:, None, :]
+    r_cg = r_cg + (center_of_mass + trans)[:, None, :]
     return r_cg
 
 
@@ -66,6 +73,13 @@ def main():
         choices=["CalphaBasedModel", "CA", "ca", "ResidueBasedModel", "RES", "res"],
     )
     arg.add_argument("--standard-name", dest="standard_names", default=False, action="store_true")
+    arg.add_argument(
+        "--uniform_restraint", dest="uniform_restraint", default=True, action="store_true"
+    )
+    arg.add_argument(
+        "--nonuniform_restraint", dest="uniform_restraint", default=True, action="store_false"
+    )
+    arg.add_argument("--segment", dest="segment_s", default=None, type=str)
     arg = arg.parse_args()
     #
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -102,16 +116,37 @@ def main():
         is_all=arg.is_all,
         chain_break_cutoff=0.1 * arg.chain_break_cutoff,
     )
+    #
+    if arg.segment_s is None:
+        segment_s = torch.zeros(len(data.cg.continuous[1]), dtype=torch.long)
+    elif arg.segment_s == "chain":
+        segment_s = torch.as_tensor(data.cg.chain_index, dtype=torch.long)
+    elif arg.segment_s == "segment":
+        segment_s = torch.as_tensor(
+            PDB.continuous_to_segment(data.cg.continuous[1]), dtype=torch.long
+        )
+    else:
+        # zero-based residue indices
+        # e.g., 0-24,25-50,51-100
+        segment_s = torch.zeros(len(data.cg.continuous[1]), dtype=torch.long)
+        for i, x in enumerate(arg.segment_s.split(",")):
+            x = x.split("-")
+            xi = int(x[0])
+            xj = int(x[1]) + 1
+            segment_s[xi:xj] = i
+    n_segment = segment_s[-1] + 1
+    #
     output_dir = pathlib.Path(arg.out_dir)
     output_dir.mkdir(exist_ok=True)
     #
-    trans = torch.zeros(3, dtype=DTYPE, requires_grad=True)
-    rotation = torch.tensor([[1, 0, 0], [0, 1, 0]], dtype=DTYPE, requires_grad=True)
+    trans = torch.zeros((n_segment, 3), dtype=DTYPE, requires_grad=True)
+    rotation = np.eye(2, 3)[None, :].repeat(n_segment, axis=0)
+    rotation = torch.tensor(rotation, dtype=DTYPE, requires_grad=True)
     #
     optimizer = torch.optim.Adam([data.r_cg, trans, rotation], lr=0.005)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200, eta_min=0.0005)
     #
-    r_cg = rigid_body_move(data.r_cg, trans, rotation)
+    r_cg = rigid_body_move(data.r_cg, n_segment, segment_s, trans, rotation)
     batch = data.convert_to_batch(r_cg).to(device)
     ret = model.forward(batch)[0]
     #
@@ -135,8 +170,15 @@ def main():
         write_SSBOND(out_fn, output.top, ssbond)
     #
     loss_f = CryoEMLossFunction(
-        arg.in_map_fn, data, device, model, model_type=model_type, restraint=arg.restraint
+        arg.in_map_fn,
+        data,
+        device,
+        model,
+        model_type=model_type,
+        restraint=arg.restraint,
+        uniform_restraint=arg.uniform_restraint,
     )
+    #
     for i in range(arg.n_step):
         loss_sum, loss = loss_f.eval(batch, ret)
         loss_sum.backward()
@@ -153,7 +195,7 @@ def main():
             }
         )
         #
-        r_cg = rigid_body_move(data.r_cg, trans, rotation)
+        r_cg = rigid_body_move(data.r_cg, n_segment, segment_s, trans, rotation)
         batch = data.convert_to_batch(r_cg).to(device)
         ret = model.forward(batch)[0]
         #

@@ -183,7 +183,7 @@ def loss_f_bonded_energy_aa(batch: dgl.DGLGraph, R: torch.Tensor, weight_s=(1.0,
 
 
 class DistanceRestraint(object):
-    def __init__(self, data, device, radius=1.0):
+    def __init__(self, data, device, radius=1.0, uniform_restraint=True):
         bfac_s = torch.as_tensor(data.cg.bfactors_cg[0, :, 0], dtype=DTYPE, device=device)
         #
         valid_residue = data.cg.atom_mask_cg[:, 0] > 0.0
@@ -191,7 +191,7 @@ class DistanceRestraint(object):
         g, d0 = dgl.radius_graph(r_cg0, radius, self_loop=False, get_distances=True)
         self.d0 = d0[:, 0]
         self.edge_src, self.edge_dst = g.edges()
-        if bfac_s.std() < 0.1:
+        if bfac_s.std() < 0.1 or uniform_restraint:
             self.w0 = torch.ones_like(self.d0, device=device)
         else:
             weight_s = bfac_s / 100.0
@@ -224,6 +224,7 @@ class CryoEMLossFunction(object):
         model_type="ResidueBasedModel",
         is_all=True,
         restraint=100.0,
+        uniform_restraint=True,
     ):
         self.is_all = is_all
         if is_all:
@@ -231,7 +232,9 @@ class CryoEMLossFunction(object):
             self.TORSION_PARs = model.TORSION_PARs
         #
         self.cryoem_loss_f = CryoEM_loss(mrc_fn, data, 0.0, device, is_all=is_all)
-        self.distance_restraint = DistanceRestraint(data, device, radius=1.0)
+        self.distance_restraint = DistanceRestraint(
+            data, device, radius=1.0, uniform_restraint=uniform_restraint
+        )
         self.geometry_energy = CoarseGrainedGeometryEnergy(model_type, device)
         #
         self.weight = {}
