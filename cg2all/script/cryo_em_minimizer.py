@@ -8,12 +8,12 @@ import tqdm
 import pathlib
 import argparse
 
-import numpy as np
-import torch
-import dgl
-
 os.environ["OPENMM_PLUGIN_DIR"] = "/dev/null"
 import mdtraj
+import numpy as np
+
+import torch
+import dgl
 
 from cg2all.lib.libconfig import MODEL_HOME, DTYPE
 from cg2all.lib.libdata import create_topology_from_data, standardize_atom_name
