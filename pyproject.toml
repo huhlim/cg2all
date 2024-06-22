@@ -18,7 +18,7 @@ cryo_em_minimizer = "cg2all.script.cryo_em_minimizer:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-torch = "^1.11"
+torch = "^2.3"
 dgl = ">=0.9"
 e3nn = "^0.5"
 ml-collections = "^0.1.1"
