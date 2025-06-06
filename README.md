@@ -28,8 +28,8 @@ pip install git+http://github.com/huhlim/cg2all
 2. Create an environment with [DGL](https://www.dgl.ai/pages/start.html) library with CUDA support
 ```bash
 # This is an example with cudatoolkit=11.3.
-# Set a proper cudatoolkit version that is compatible with your CUDA drivier and DGL library.
-# dgl>=1.1 occassionally raises some errors, so please use dgl<=1.0.
+# Set a proper cudatoolkit version that is compatible with your CUDA driver and DGL library.
+# dgl>=1.1 occasionally raises some errors, so please use dgl<=1.0.
 conda create --name cg2all pip cudatoolkit=11.3 dgl=1.0 -c dglteam/label/cu113
 ```
 3. Activate the environment
