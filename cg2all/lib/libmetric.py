@@ -70,7 +70,7 @@ def rmsd_torsion_angle(sc0, sc_ref, mask):
     sc = torch.acos(torch.clamp(sc0[..., 0], -1.0, 1.0))
     sc = sc * torch.sign(sc0[..., 1])
     d_sc = (sc - sc_ref) / (2.0 * pi)
-    d_sc = torch.minumum(d_sc, 2.0 * pi - d_sc) * mask
+    d_sc = torch.minimum(d_sc, 2.0 * pi - d_sc) * mask
     #
     d_bb = torch.sqrt(torch.mean(torch.power(d_sc[:, :2], 2)))
     d_sc = torch.sqrt(torch.sum(torch.power(d_sc[:, 3:], 2)) / mask[:, 3:].sum())
