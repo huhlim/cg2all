@@ -47,7 +47,7 @@ def main():
         # fmt:off
         choices=["CalphaBasedModel", "CA", "ca", \
                 "ResidueBasedModel", "RES", "res", \
-                "Martini", "martini", "Martini2", "martini2", \
+                "Martini", "martini", \
                 "Martini3", "martini3", \
                 "PRIMO", "primo", \
                 "BB", "bb", "backbone", "Backbone", "BackboneModel", \
@@ -88,7 +88,7 @@ def main():
                 model_type = "CalphaBasedModel"
             elif arg.cg_model in ["ResidueBasedModel", "RES", "res"]:
                 model_type = "ResidueBasedModel"
-            elif arg.cg_model in ["Martini", "martini", "Martini2", "martini2"]:
+            elif arg.cg_model in ["Martini", "martini"]:
                 model_type = "Martini"
             elif arg.cg_model in ["Martini3", "martini3"]:
                 model_type = "Martini3"
