@@ -50,11 +50,15 @@ def patch_TER(
     xyz_define = xyz0[:, index_s["define"]]
     for i, atom_name in enumerate(patch["append"]):
         out_index = out_atom_s.index(atom_name)
-        for k in range(n_frame):
-            t_ang = patch["t_ang"][i] + t_ang0[k]
-            xyz[k, out_index] = internal_to_cartesian(
-                *xyz_define[k], patch["b_len"] * 0.1, patch["b_ang"], t_ang
-            )
+        t_ang = patch["t_ang"][i] + t_ang0
+        xyz[:, out_index] = internal_to_cartesian(
+            xyz_define[:, 0],
+            xyz_define[:, 1],
+            xyz_define[:, 2],
+            patch["b_len"] * 0.1,
+            patch["b_ang"],
+            t_ang,
+        )
     #
     residue = top.add_residue(residue0.name, top.chain(-1), residue0.resSeq)
     if residue0.segment_id != "":
