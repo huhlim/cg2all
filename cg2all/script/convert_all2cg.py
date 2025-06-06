@@ -25,15 +25,14 @@ def main():
         # fmt:off
         choices=["CalphaBasedModel", "CA", "ca", \
                 "ResidueBasedModel", "RES", "res", \
-                "Martini", "martini", \
+                "Martini", "martini", "Martini2", "martini2", \
                 "Martini3", "martini3", \
                 "PRIMO", "primo", \
-                "CACM", "cacm", "CalphaCM", "CalphaCMModel",\
                 "BB", "bb", "backbone", "Backbone", "BackboneModel", \
                 "MC", "mc", "mainchain", "Mainchain", "MainchainModel",
                 "CACM", "cacm", "CalphaCM", "CalphaCMModel",
                 "CASC", "casc", "CalphaSC", "CalphaSCModel",
-                "SC", "sc", "sidechain", "Sidechain",
+                "SC", "sc", "sidechain", "SidechainModel",
                 ]
         # fmt:on
     )
