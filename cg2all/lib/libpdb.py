@@ -141,7 +141,7 @@ class PDB(object):
         if len(ssbond_s) > 1:
             cys_s, n_cys = np.unique(np.concatenate(ssbond_s), return_counts=True)
             if np.any(n_cys > 1):
-                sys.exit("ERROR: some of the Cysteins have multiple SSBOND connections")
+                sys.exit("ERROR: some of the Cysteines have multiple SSBOND connections")
         #
         self.ssbond_s = ssbond_s
 
