@@ -43,7 +43,7 @@ def main():
         cg_model = cg2all.lib.libcg.CalphaBasedModel
     elif arg.cg_model in ["RES", "res", "ResidueBasedModel"]:
         cg_model = cg2all.lib.libcg.ResidueBasedModel
-    elif arg.cg_model in ["Martini", "martini", "Martini2", "martini2"]:
+    elif arg.cg_model in ["Martini", "martini"]:
         cg_model = functools.partial(
             cg2all.lib.libcg.Martini, topology_map=read_coarse_grained_topology("martini")
         )
