@@ -289,7 +289,9 @@ class MinimizableData(object):
     def convert_to_batch(self, r_cg):
         valid_residue = self.cg.atom_mask_cg[:, 0] > 0.0
         pos = r_cg[valid_residue, :]
-        geom_s = self.cg.get_geometry(pos, self.cg.atom_mask_cg, self.cg.continuous[0])
+        geom_s = self.cg.get_geometry(
+            pos, self.cg.atom_mask_cg[valid_residue], self.cg.continuous[0][valid_residue]
+        )
         #
         node_feat = self.cg.geom_to_feature(geom_s, self.cg.continuous, dtype=self.dtype)
         data = dgl.radius_graph(pos[:, 0], self.radius, self_loop=False)
