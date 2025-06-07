@@ -222,6 +222,7 @@ def update_by_permute_method(R, bfac, atom_mask, i_res, ref_res, tor, amb, opr_d
         R_amb = R[k, i_res, index_amb0, :]
         d_min = None
         #
+        swap_min = 0
         for swap, atom in enumerate(amb.atom_s):
             torsion_angle_atom_s = amb.torsion_atom_s + [atom]
             index = [ref_res.atom_s.index(atom) for atom in torsion_angle_atom_s]
@@ -248,8 +249,8 @@ def update_by_permute_method(R, bfac, atom_mask, i_res, ref_res, tor, amb, opr_d
                 rigid_min = rigid_try
                 swap_min = swap
         #
-        opr_s[0].append(opr[0])
-        opr_s[1].append(opr[1])
+        opr_s[0].append(opr_min[0])
+        opr_s[1].append(opr_min[1])
         rigid_s.append(rigid_min)
         #
         if swap_min == 1:
