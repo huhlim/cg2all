@@ -129,7 +129,7 @@ CONFIG["structure_module"] = STRUCTURE_MODULE
 def _get_gpu_mem():
     return (
         torch.cuda.memory_allocated() / 1024 / 1024,
-        torch.cuda.memory_allocated() / 1024 / 1024,
+        torch.cuda.memory_reserved() / 1024 / 1024,
     )
 
 
